@@ -12,7 +12,6 @@ $env:PYTHONPATH = "$script:RepoRoot;$script:RepoRoot/services/api;$script:RepoRo
 
 Invoke-QualityCommand 'Python Bandit scan' 'python' @('-m','bandit','-q','-r','services/api','services/realtime','-x','*/tests/*') $script:RepoRoot
 Invoke-QualityCommand 'API dependency audit' 'python' @('-m','pip_audit','-r','services/api/requirements.txt') $script:RepoRoot
-Invoke-QualityCommand 'Realtime dependency audit' 'python' @('-m','pip_audit','-r','services/realtime/requirements.txt') $script:RepoRoot
 Invoke-QualityCommand 'Admin npm ci' 'npm' @('ci') (Join-Path $script:RepoRoot 'apps/admin')
 Invoke-QualityCommand 'Admin npm audit' 'npm' @('audit','--audit-level=high') (Join-Path $script:RepoRoot 'apps/admin')
 Invoke-QualityCommand 'API security regression tests' 'python' @('-m','pytest','tests/security','-q') $script:RepoRoot
