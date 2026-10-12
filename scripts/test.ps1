@@ -30,7 +30,12 @@ if ($Mode -in @('Quick','Full')) {
     }
     Invoke-Stage 'Backend and realtime tests' {
         Assert-QualityTool 'python'
-        $env:PYTHONPATH = "$script:RepoRoot;$script:RepoRoot/services/api;$script:RepoRoot/services/realtime"
+        $pathSep = [System.IO.Path]::PathSeparator
+        $env:PYTHONPATH = @(
+            $script:RepoRoot,
+            (Join-Path $script:RepoRoot 'services/api'),
+            (Join-Path $script:RepoRoot 'services/realtime')
+        ) -join $pathSep
         Invoke-QualityCommand 'Backend API tests' 'python' @('-m','pytest','services/api/tests','-q') $script:RepoRoot
         Invoke-QualityCommand 'Realtime tests' 'python' @('-m','pytest','services/realtime/tests','-q') $script:RepoRoot
     }
