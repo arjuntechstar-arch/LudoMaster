@@ -60,12 +60,20 @@ def run_game(index: int, players: int, rng: random.Random, stress: bool) -> dict
             forced_roll = rng.randint(1, 6)
             _, legal_moves = engine.roll_dice(forced_value=forced_roll)
             rolls += 1
-            if stress and rng.random() < 0.03:
-                # Duplicate roll attempts must be rejected once a move is required.
+            if (
+                stress
+                and legal_moves
+                and engine.phase == TurnPhase.MOVE_REQUIRED
+                and rng.random() < 0.03
+            ):
+                # Duplicate roll attempts must be rejected while the same turn is
+                # waiting for a required move. If there were no legal moves, the
+                # engine correctly advances to the next player's ROLL_REQUIRED
+                # phase, where a new roll is valid and must not be treated as a
+                # duplicate of the previous player's turn.
                 try:
                     engine.roll_dice(forced_value=rng.randint(1, 6))
-                    if engine.phase == TurnPhase.MOVE_REQUIRED:
-                        raise AssertionError("Duplicate roll was accepted during MOVE_REQUIRED")
+                    raise AssertionError("Duplicate roll was accepted during MOVE_REQUIRED")
                 except ValueError:
                     pass
             if not legal_moves:
