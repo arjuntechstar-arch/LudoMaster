@@ -1,0 +1,1 @@
+void vibrate(int durationMs) {}

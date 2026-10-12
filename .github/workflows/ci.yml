@@ -1,0 +1,126 @@
+name: LudoMaster CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  engine-tests:
+    name: Core Game Engine Tests (Dart)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install Engine Dependencies
+        run: |
+          cd packages/game_engine
+          dart pub get
+
+      - name: Run Engine Tests & Simulations
+        run: |
+          cd packages/game_engine
+          dart test --reporter=expanded
+
+  backend-tests:
+    name: Backend API & Realtime Gateway Tests (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/api/requirements.txt
+          pip install -r services/realtime/requirements.txt
+          pip install pytest pytest-asyncio httpx
+
+      - name: Run API Service Tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/services/api:${{ github.workspace }}/services/realtime
+        run: |
+          pytest services/api/tests -v
+
+      - name: Run Realtime Gateway Tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/services/api:${{ github.workspace }}/services/realtime
+        run: |
+          pytest services/realtime/tests -v
+
+      - name: Run Disaster Recovery & Backup Drill
+        run: |
+          python scripts/backup_restore.py drill
+
+      - name: Run E2E Load Simulation Smoke Test
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/services/api
+        run: |
+          python tests/e2e_load_test.py --in-process --clients 5 --iterations 1
+
+  mobile-tests:
+    name: Flutter Mobile App Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.x"
+          channel: "stable"
+          cache: true
+
+      - name: Install Mobile Dependencies
+        run: |
+          cd apps/mobile
+          flutter pub get
+
+      - name: Run Flutter Static Analysis
+        run: |
+          cd apps/mobile
+          flutter analyze --no-fatal-infos
+
+      - name: Run Flutter Widget & Unit Tests
+        run: |
+          cd apps/mobile
+          flutter test --reporter=expanded
+
+  admin-panel-build:
+    name: Admin Web Portal Build (React / Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: apps/admin/package-lock.json
+
+      - name: Install Admin Panel Dependencies
+        run: |
+          cd apps/admin
+          npm ci
+
+      - name: Build Admin Panel Production Bundle
+        run: |
+          cd apps/admin
+          npm run build

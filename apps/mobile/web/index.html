@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Ludo Play: play with friends, earn rewards, and win championships.">
+  <meta name="theme-color" content="#0B1224">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Ludo Play">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Ludo Play</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b1224; }
+    #app-loading { position: fixed; inset: 0; display: grid; place-items: center; color: #f9d976; font-family: Arial, sans-serif; }
+    .loading-content { text-align: center; }
+    .loading-content img { width: 112px; height: 112px; border-radius: 24px; }
+    .loading-content h1 { margin: 20px 0 16px; font-size: 28px; }
+    .loading-content p { color: #a8b2c8; font-size: 14px; }
+    .loading-ring { width: 26px; height: 26px; border: 3px solid #29344e; border-top-color: #f9d976; border-radius: 50%; margin: 0 auto; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .loading-ring { animation: none; } }
+  </style>
+</head>
+<body>
+  <div id="app-loading" role="status" aria-live="polite">
+    <div class="loading-content">
+      <img src="ludo-play-logo.png" alt="Ludo Play logo">
+      <h1>Ludo Play</h1><div class="loading-ring"></div>
+      <p>Getting ready to play...</p>
+    </div>
+  </div>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

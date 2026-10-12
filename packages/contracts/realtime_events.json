@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LudoRealtimeEventEnvelope",
+  "type": "object",
+  "required": ["event", "version", "matchId", "sequence", "serverTime", "payload"],
+  "properties": {
+    "event": {
+      "type": "string",
+      "enum": [
+        "CONNECTED",
+        "AUTHENTICATED",
+        "ROOM_STATE",
+        "PLAYER_JOINED",
+        "PLAYER_LEFT",
+        "READY_CHANGED",
+        "MATCH_STARTED",
+        "TURN_STARTED",
+        "DICE_ROLLED",
+        "LEGAL_MOVES",
+        "MOVE_APPLIED",
+        "TOKEN_CAPTURED",
+        "TOKEN_HOME",
+        "BONUS_TURN",
+        "TURN_TIMEOUT",
+        "PLAYER_DISCONNECTED",
+        "PLAYER_RECONNECTED",
+        "PLAYER_FORFEITED",
+        "STATE_SNAPSHOT",
+        "MATCH_FINISHED",
+        "CHAT_MESSAGE",
+        "EMOJI_SENT",
+        "ERROR"
+      ]
+    },
+    "version": {
+      "type": "integer",
+      "default": 1
+    },
+    "matchId": {
+      "type": "string"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "serverTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object"
+    }
+  }
+}
