@@ -8,9 +8,20 @@ Write-QualityHeader 'Security Validation'
 Assert-QualityTool 'python'
 Assert-QualityTool 'npm'
 
-$env:PYTHONPATH = "$script:RepoRoot;$script:RepoRoot/services/api;$script:RepoRoot/services/realtime"
+$pathSep = [System.IO.Path]::PathSeparator
+$env:PYTHONPATH = @(
+    $script:RepoRoot,
+    (Join-Path $script:RepoRoot 'services/api'),
+    (Join-Path $script:RepoRoot 'services/realtime')
+) -join $pathSep
 
-Invoke-QualityCommand 'Python Bandit scan' 'python' @('-m','bandit','-q','-r','services/api','services/realtime','-x','*/tests/*') $script:RepoRoot
+# Scan application source only. Explicitly exclude tests, virtual environments,
+# caches and generated/build output so third-party packages are not reported as
+# first-party security findings.
+Invoke-QualityCommand 'Python Bandit scan' 'python' @(
+    '-m','bandit','-q','-r','services/api/app','services/realtime',
+    '-x','*/tests/*,*/.venv/*,*/venv/*,*/__pycache__/*,*/build/*,*/dist/*'
+) $script:RepoRoot
 Invoke-QualityCommand 'API dependency audit' 'python' @('-m','pip_audit','-r','services/api/requirements.txt') $script:RepoRoot
 Invoke-QualityCommand 'Admin npm ci' 'npm' @('ci') (Join-Path $script:RepoRoot 'apps/admin')
 Invoke-QualityCommand 'Admin npm audit' 'npm' @('audit','--audit-level=high') (Join-Path $script:RepoRoot 'apps/admin')
@@ -25,7 +36,7 @@ if (Test-QualityTool 'gitleaks') {
 }
 
 if (Test-QualityTool 'trivy') {
-    Invoke-QualityCommand 'Filesystem vulnerability scan (Trivy)' 'trivy' @('fs','--exit-code','1','--severity','HIGH,CRITICAL','--scanners','vuln,secret','.') $script:RepoRoot
+    Invoke-QualityCommand 'Filesystem vulnerability scan (Trivy)' 'trivy' @('fs','--exit-code','1','--severity','HIGH,CRITICAL','--scanners','vuln,secret','--skip-dirs','services/api/.venv','--skip-dirs','apps/admin/node_modules','.') $script:RepoRoot
 } elseif ($Strict) {
     throw 'trivy is required in strict security mode.'
 } else {
