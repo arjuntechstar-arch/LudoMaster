@@ -83,7 +83,9 @@ void main() {
       expect(find.byType(GameScreen), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      controller.dispose();
+      // Let ProviderScope own and dispose the overridden StateNotifier exactly once.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     });
   }
 }
