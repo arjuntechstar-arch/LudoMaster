@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/audio_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_loader.dart';
-import 'home_screen.dart';
+import 'modern_home_screen.dart';
 
 class StartupScreen extends StatefulWidget {
   const StartupScreen({super.key});
@@ -29,7 +29,7 @@ class _StartupScreenState extends State<StartupScreen> {
     future: _initialization,
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.done) {
-        return const HomeScreen();
+        return const ModernHomeScreen();
       }
       return const Scaffold(
         backgroundColor: AppColors.background,
