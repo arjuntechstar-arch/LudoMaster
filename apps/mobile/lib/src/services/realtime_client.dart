@@ -60,7 +60,13 @@ class RealtimeClient {
     );
 
     try {
-      final uri = Uri.parse('$wsBaseUrl/ws/match/$matchId?token=$token');
+      final uri = Uri.parse('$wsBaseUrl/ws/match/$matchId').replace(
+        queryParameters: {
+          'token': token,
+          if (_lastReceivedSequence > 0)
+            'lastReceivedSequence': '$_lastReceivedSequence',
+        },
+      );
       _channel = WebSocketChannel.connect(uri);
 
       _subscription = _channel!.stream.listen(
@@ -72,14 +78,6 @@ class RealtimeClient {
       _setStatus(RealtimeConnectionStatus.connected);
       _reconnectAttempts = 0;
       _startHeartbeat();
-
-      // If reconnecting, send RECONNECT action with sequence
-      if (_lastReceivedSequence > 0) {
-        sendAction({
-          'action': 'RECONNECT',
-          'lastReceivedSequence': _lastReceivedSequence,
-        });
-      }
     } catch (e) {
       developer.log('WebSocket connection error: $e');
       _scheduleReconnect();
@@ -90,8 +88,36 @@ class RealtimeClient {
     try {
       final map = jsonDecode(raw as String) as Map<String, dynamic>;
       final seq = map['sequence'] as int?;
-      if (seq != null && seq > _lastReceivedSequence) {
-        _lastReceivedSequence = seq;
+
+      // Sequence-bearing realtime events are monotonic. Ignore an event that
+      // has already been processed so reconnect replay cannot animate or apply
+      // the same move twice. Sequence-less transport messages (for example
+      // PONG) are still delivered.
+      if (seq != null) {
+        if (seq < _lastReceivedSequence) {
+          developer.log(
+            'Ignoring stale realtime event sequence $seq; '
+            'latest is $_lastReceivedSequence',
+          );
+          return;
+        }
+
+        // Some connection/snapshot envelopes intentionally share the current
+        // server sequence. Allow canonical connection-state events through,
+        // while dropping duplicate gameplay events at the same sequence.
+        final eventName = map['event'] as String?;
+        final isCanonicalConnectionEvent =
+            eventName == 'AUTHENTICATED' || eventName == 'STATE_SNAPSHOT';
+        if (seq == _lastReceivedSequence &&
+            _lastReceivedSequence > 0 &&
+            !isCanonicalConnectionEvent) {
+          developer.log('Ignoring duplicate realtime event sequence $seq');
+          return;
+        }
+
+        if (seq > _lastReceivedSequence) {
+          _lastReceivedSequence = seq;
+        }
       }
       _eventController.add(map);
     } catch (e) {
