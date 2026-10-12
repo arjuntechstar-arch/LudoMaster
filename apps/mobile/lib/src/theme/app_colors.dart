@@ -5,59 +5,68 @@ import 'package:game_engine/game_engine.dart';
 class AppColors {
   const AppColors._();
 
-  // Background & Surface - Deep Midnight Obsidian & Space Cadet
-  static const Color background = Color(0xFF0A0E1A);
-  static const Color surface = Color(0xFF131B2E);
-  static const Color surfaceCard = Color(0xFF1C2640);
-  static const Color surfaceElevated = Color(0xFF283656);
+  // Background & surfaces - modern deep navy with softer contrast.
+  static const Color background = Color(0xFF08111F);
+  static const Color surface = Color(0xFF101C2E);
+  static const Color surfaceCard = Color(0xFF16243A);
+  static const Color surfaceElevated = Color(0xFF203451);
+
+  // Product accents. Violet is the primary interaction color, while mint/cyan
+  // are used for success and social actions. Gold remains the reward/economy
+  // accent so existing game screens retain their familiar visual language.
+  static const Color primary = Color(0xFF7C5CFC);
+  static const Color primaryLight = Color(0xFFA995FF);
+  static const Color primaryDark = Color(0xFF5136D9);
+  static const Color mint = Color(0xFF38D9A9);
+  static const Color coral = Color(0xFFFF6B81);
 
   // Accents & Metallics - Luminous Cyber Gold & Cyan
-  static const Color gold = Color(0xFFFFD700);
-  static const Color goldLight = Color(0xFFFFE66D);
-  static const Color goldDark = Color(0xFFD4AF37);
+  static const Color gold = Color(0xFFFFD166);
+  static const Color goldLight = Color(0xFFFFE4A3);
+  static const Color goldDark = Color(0xFFD9A62E);
   static const Color amber = Color(0xFFF59E0B);
-  static const Color cyan = Color(0xFF00F0FF);
-  static const Color neonPink = Color(0xFFFF2D55);
+  static const Color cyan = Color(0xFF36D1DC);
+  static const Color neonPink = Color(0xFFFF4D8D);
 
   // Player Colors - Ultra-vibrant, high-contrast jewel tones
-  static const Color red = Color(0xFFFF3366);
-  static const Color redLight = Color(0xFFFF6B8B);
-  static const Color redDark = Color(0xFFBE123C);
+  static const Color red = Color(0xFFFF4D6D);
+  static const Color redLight = Color(0xFFFF8FA3);
+  static const Color redDark = Color(0xFFC92A4B);
 
-  static const Color green = Color(0xFF10B981);
-  static const Color greenLight = Color(0xFF34D399);
-  static const Color greenDark = Color(0xFF047857);
+  static const Color green = Color(0xFF2DD4BF);
+  static const Color greenLight = Color(0xFF5EEAD4);
+  static const Color greenDark = Color(0xFF0F766E);
 
   static const Color yellow = Color(0xFFFBBF24);
   static const Color yellowLight = Color(0xFFFDE68A);
   static const Color yellowDark = Color(0xFFD97706);
 
-  static const Color blue = Color(0xFF0EA5E9);
-  static const Color blueLight = Color(0xFF38BDF8);
-  static const Color blueDark = Color(0xFF0369A1);
+  static const Color blue = Color(0xFF38BDF8);
+  static const Color blueLight = Color(0xFF7DD3FC);
+  static const Color blueDark = Color(0xFF0284C7);
 
-  static const Color orange = Color(0xFFFF6B00);
-  static const Color orangeLight = Color(0xFFFB923C);
-  static const Color orangeDark = Color(0xFFC2410C);
+  static const Color orange = Color(0xFFFF8A3D);
+  static const Color orangeLight = Color(0xFFFFB27A);
+  static const Color orangeDark = Color(0xFFC65D15);
 
-  static const Color purple = Color(0xFFA855F7);
-  static const Color purpleLight = Color(0xFFC084FC);
-  static const Color purpleDark = Color(0xFF7E22CE);
+  static const Color purple = Color(0xFF9B7BFF);
+  static const Color purpleLight = Color(0xFFC4B5FD);
+  static const Color purpleDark = Color(0xFF6D4AFF);
 
   // Card Background Aliases
   static const Color cardBackground = surfaceCard;
   static const Color cardBackgroundLight = surfaceElevated;
 
   // Board Specific
-  static const Color boardBackground = Color(0xFF0F172A);
-  static const Color trackCellBorder = Color(0xFF2E3E63);
-  static const Color trackCellFill = Color(0xFF172036);
-  static const Color starSafe = Color(0xFFFFD700);
+  static const Color boardBackground = Color(0xFF0D1728);
+  static const Color trackCellBorder = Color(0xFF2E466B);
+  static const Color trackCellFill = Color(0xFF142238);
+  static const Color starSafe = Color(0xFFFFD166);
 
   // Text
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFF94A3B8);
-  static const Color textMuted = Color(0xFF64748B);
+  static const Color textPrimary = Color(0xFFF7F9FC);
+  static const Color textSecondary = Color(0xFFA8B5C9);
+  static const Color textMuted = Color(0xFF73829B);
 
   static Color getPlayerColor(PlayerColor color) {
     switch (color) {
