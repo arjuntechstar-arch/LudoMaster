@@ -34,33 +34,37 @@ async def test_guest_login_flow(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_email_registration_and_login(client: AsyncClient):
-    # 1. Register new email
+    # 1. Register new email with the complete required sign-up profile.
     reg_res = await client.post(
         "/api/v1/auth/register",
         json={
             "email": "player1@example.com",
             "password": "Password123!",
             "display_name": "LudoChamp",
+            "username": "ludo_champ",
+            "avatar_id": "avatar_2",
             "device_id": "device_reg_1",
             "platform": "IOS",
         },
     )
-    assert reg_res.status_code == 200
+    assert reg_res.status_code == 200, reg_res.text
     reg_data = reg_res.json()
     assert reg_data["display_name"] == "LudoChamp"
     assert reg_data["is_guest"] is False
 
-    # 2. Duplicate registration should fail
+    # 2. Duplicate email should still fail after request validation succeeds.
     dup_res = await client.post(
         "/api/v1/auth/register",
         json={
             "email": "player1@example.com",
             "password": "Password123!",
             "display_name": "LudoChamp2",
+            "username": "ludo_champ2",
+            "avatar_id": "avatar_3",
             "device_id": "device_reg_2",
         },
     )
-    assert dup_res.status_code == 400
+    assert dup_res.status_code == 400, dup_res.text
 
     # 3. Successful login
     login_res = await client.post(
@@ -103,7 +107,7 @@ async def test_guest_upgrade_preserves_account(client: AsyncClient):
     assert me_res.json()["is_guest"] is True
     assert me_res.json()["wallet"]["coins"] == 1000
 
-    # 3. Upgrade to full verified account
+    # 3. Upgrade to full verified account with required profile setup.
     upgrade_res = await client.post(
         "/api/v1/auth/upgrade",
         headers=headers,
@@ -111,9 +115,11 @@ async def test_guest_upgrade_preserves_account(client: AsyncClient):
             "email": "upgraded_player@example.com",
             "password": "SecurePassword456!",
             "display_name": "Upgraded Player",
+            "username": "upgraded_player",
+            "avatar_id": "avatar_4",
         },
     )
-    assert upgrade_res.status_code == 200
+    assert upgrade_res.status_code == 200, upgrade_res.text
     upgrade_data = upgrade_res.json()
     assert upgrade_data["is_guest"] is False
     assert upgrade_data["player_id"] == player_id  # Player ID preserved!
@@ -128,6 +134,8 @@ async def test_guest_upgrade_preserves_account(client: AsyncClient):
     assert me_after.json()["is_verified"] is True
     assert me_after.json()["wallet"]["coins"] == 1000
     assert me_after.json()["profile"]["display_name"] == "Upgraded Player"
+    assert me_after.json()["profile"]["username"] == "upgraded_player"
+    assert me_after.json()["profile"]["avatar_id"] == "avatar_4"
 
     # 5. Verify can now login with email
     login_check = await client.post(

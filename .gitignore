@@ -3,3 +3,26 @@
 .env.*
 !.env.example
 !.env.*.example
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Generated build output
+build/
+dist/
+.dart_tool/
+
+# Python caches and test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local runtime output
+*.log
+*.db
+*.sqlite
+*.sqlite3
+.flutter-plugins
+.flutter-plugins-dependencies

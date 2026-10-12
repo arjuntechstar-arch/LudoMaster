@@ -17,49 +17,36 @@ async def test_profile_and_stats_flow(client: AsyncClient):
     assert prof_res.status_code == 200
     assert prof_res.json()["player_id"] == player_id
 
-    # 3. Update profile
+    # 3. Profile editing currently supports avatar selection only.
     patch_res = await client.patch(
         "/api/v1/me/profile",
         headers=headers,
-        json={
-            "display_name": "RoyalRoller",
-            "avatar_id": "avatar_7",
-            "country_code": "IND",
-        },
+        json={"avatar_id": "avatar_7"},
     )
-    assert patch_res.status_code == 200
+    assert patch_res.status_code == 200, patch_res.text
     updated_data = patch_res.json()
-    assert updated_data["display_name"] == "RoyalRoller"
     assert updated_data["avatar_id"] == "avatar_7"
-    assert updated_data["country_code"] == "IND"
 
     lookup_res = await client.get(f"/api/v1/players/{player_id}")
     assert lookup_res.status_code == 200
-    assert lookup_res.json()["display_name"] == "RoyalRoller"
+    assert lookup_res.json()["avatar_id"] == "avatar_7"
     bad_lookup = await client.get("/api/v1/players/LM-99999999")
     assert bad_lookup.status_code == 404
 
 @pytest.mark.asyncio
-async def test_unique_usernames_and_free_avatars(client: AsyncClient):
+async def test_profile_update_rejects_locked_identity_fields_and_allows_free_avatars(client: AsyncClient):
     first = (await client.post('/api/v1/auth/guest', json={'device_id': 'username_first'})).json()
-    second = (await client.post('/api/v1/auth/guest', json={'device_id': 'username_second'})).json()
     headers = {'Authorization': f"Bearer {first['access_token']}"}
-    other = {'Authorization': f"Bearer {second['access_token']}"}
-    available = await client.get('/api/v1/me/username-availability?username=Royal_Roller', headers=headers)
-    assert available.json()['available'] is True
-    saved = await client.patch('/api/v1/me/profile', headers=headers, json={'username': '  @Royal_Roller  ', 'display_name': '  Royal Roller  ', 'avatar_id': 'avatar_3'})
-    assert saved.status_code == 200
-    assert saved.json()['username'] == 'royal_roller'
-    assert saved.json()['display_name'] == 'Royal Roller'
-    taken = await client.get('/api/v1/me/username-availability?username=ROYAL_ROLLER', headers=other)
-    assert taken.json()['available'] is False
-    assert (await client.patch('/api/v1/me/profile', headers=other, json={'username': 'ROYAL_ROLLER'})).status_code == 409
-    assert (await client.patch('/api/v1/me/profile', headers=other, json={'display_name': '   '})).status_code == 422
-    assert (await client.patch('/api/v1/me/profile', headers=other, json={'username': 'bad name'})).status_code == 422
+
+    # display_name/username/country are selected during sign-up and are not
+    # mutable through the current profile PATCH contract.
+    assert (await client.patch('/api/v1/me/profile', headers=headers, json={'username': 'royal_roller'})).status_code == 422
+    assert (await client.patch('/api/v1/me/profile', headers=headers, json={'display_name': 'Royal Roller'})).status_code == 422
+    assert (await client.patch('/api/v1/me/profile', headers=headers, json={'country_code': 'IND'})).status_code == 422
+
     for index in range(8):
-        assert (await client.patch('/api/v1/me/profile', headers=other, json={'avatar_id': f'avatar_{index}'})).status_code == 200
-    assert (await client.patch('/api/v1/me/profile', headers=other, json={'avatar_id': 'paid_unowned'})).status_code == 400
-    friend = await client.post('/api/v1/friends/request', headers=other, json={'username': '@Royal_Roller'})
-    assert friend.status_code == 201
-    requests = (await client.get('/api/v1/friends/requests', headers=headers)).json()
-    assert requests['incoming'][0]['user_id'] == second['user_id']
+        response = await client.patch('/api/v1/me/profile', headers=headers, json={'avatar_id': f'avatar_{index}'})
+        assert response.status_code == 200, response.text
+        assert response.json()['avatar_id'] == f'avatar_{index}'
+
+    assert (await client.patch('/api/v1/me/profile', headers=headers, json={'avatar_id': 'paid_unowned'})).status_code == 400

@@ -17,14 +17,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Default: Classic mode selected, player count is visible
     expect(find.text('PASS & PLAY'), findsOneWidget);
     expect(find.text('Classic'), findsOneWidget);
     expect(find.text('Quick'), findsOneWidget);
     expect(find.text('2v2 Team'), findsOneWidget);
     expect(find.text('NUMBER OF PLAYERS'), findsOneWidget);
 
-    // Select Quick Mode
     await tester.tap(find.text('Quick'));
     await tester.pumpAndSettle();
     expect(
@@ -32,10 +30,8 @@ void main() {
       findsOneWidget,
     );
 
-    // Select 2v2 Team Mode
     await tester.tap(find.text('2v2 Team'));
     await tester.pumpAndSettle();
-    // In team mode, player count selection is locked/hidden
     expect(find.text('NUMBER OF PLAYERS'), findsNothing);
     expect(
       find.textContaining(
@@ -59,15 +55,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Switch to 2v2 Team Mode
       await tester.tap(find.text('2v2 Team'));
       await tester.pumpAndSettle();
 
-      // Tap Start Match
       await tester.tap(find.text('START MATCH'));
-      await tester.pumpAndSettle();
+      // Do not pumpAndSettle here: a live game intentionally schedules turn and
+      // bot timers. One frame is enough for navigation/state publication.
+      await tester.pump();
 
-      // Verify game state in controller
       final controllerState = container.read(gameControllerProvider);
       expect(controllerState, isNotNull);
       final gameState = controllerState!.gameState;
@@ -77,6 +72,12 @@ void main() {
       expect(gameState.players[1].teamId, 1); // Green
       expect(gameState.players[2].teamId, 0); // Yellow
       expect(gameState.players[3].teamId, 1); // Blue
+
+      // A started match owns periodic/action timers; cancel them explicitly
+      // before the widget test verifies that no fake timers remain pending.
+      container.read(gameControllerProvider.notifier).quitMatch();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     },
   );
 }

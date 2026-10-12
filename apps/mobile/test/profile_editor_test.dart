@@ -22,28 +22,13 @@ UserProfileModel profile({
 );
 
 class ProfileApi extends ApiClient {
-  String? checkedUsername;
   UserProfileModel? saved;
-  @override
-  Future<Map<String, dynamic>> checkUsernameAvailability(
-    String username,
-  ) async {
-    checkedUsername = username;
-    return {
-      'available': username != 'occupied',
-      'reason': 'This username is already taken.',
-    };
-  }
 
   @override
-  Future<UserProfileModel> updateProfile({
-    required String displayName,
-    String? username,
-    required String avatarId,
-  }) async {
+  Future<UserProfileModel> updateProfile({required String avatarId}) async {
     return saved = profile(
-      name: displayName,
-      username: username,
+      name: 'Player',
+      username: 'royal_roller',
       avatar: avatarId,
     );
   }
@@ -51,7 +36,7 @@ class ProfileApi extends ApiClient {
 
 void main() {
   testWidgets(
-    'checks username availability, selects a free avatar and hides internal IDs',
+    'shows locked identity fields and saves a free avatar',
     (tester) async {
       tester.view.physicalSize = const Size(520, 1000);
       tester.view.devicePixelRatio = 1;
@@ -59,6 +44,7 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
+
       final api = ProfileApi();
       await tester.pumpWidget(
         MaterialApp(
@@ -67,8 +53,13 @@ void main() {
               body: ElevatedButton(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) =>
-                        ProfileEditorScreen(apiClient: api, profile: profile()),
+                    builder: (_) => ProfileEditorScreen(
+                      apiClient: api,
+                      profile: profile(
+                        name: 'Royal Player',
+                        username: 'royal_roller',
+                      ),
+                    ),
                   ),
                 ),
                 child: const Text('EDIT'),
@@ -77,36 +68,26 @@ void main() {
           ),
         ),
       );
+
       await tester.tap(find.text('EDIT'));
       await tester.pumpAndSettle();
+
       expect(find.text('INTERNAL-ID'), findsNothing);
       expect(find.text('internal-user'), findsNothing);
-      expect(find.byType(ProfileAvatar), findsNWidgets(9));
-      final fields = find.byType(TextFormField);
-      await tester.enterText(fields.at(1), 'occupied');
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump();
-      expect(find.text('This username is already taken.'), findsOneWidget);
+      expect(find.text('Royal Player'), findsOneWidget);
+      expect(find.text('@royal_roller'), findsOneWidget);
       expect(
-        tester
-            .widget<ElevatedButton>(
-              find.widgetWithText(ElevatedButton, 'SAVE PROFILE'),
-            )
-            .onPressed,
-        isNull,
+        find.text('Name and username are set during signup and cannot be changed.'),
+        findsOneWidget,
       );
-      await tester.enterText(fields.at(1), 'Royal_Roller');
-      await tester.enterText(fields.at(0), '  Royal Player  ');
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump();
-      expect(api.checkedUsername, 'royal_roller');
-      expect(find.text('Username available'), findsOneWidget);
+      expect(find.byType(ProfileAvatar), findsNWidgets(9));
+
       await tester.tap(find.text('Rocket'));
-      await tester.tap(find.text('SAVE PROFILE'));
+      await tester.tap(find.text('SAVE AVATAR'));
       await tester.pumpAndSettle();
+
+      expect(api.saved, isNotNull);
       expect(api.saved!.avatarId, 'avatar_1');
-      expect(api.saved!.displayName, 'Royal Player');
-      expect(api.saved!.username, 'royal_roller');
     },
   );
 }

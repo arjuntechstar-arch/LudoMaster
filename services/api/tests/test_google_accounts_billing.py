@@ -31,6 +31,7 @@ async def test_google_link_preserves_wallet_and_prevents_device_login(client, db
     monkeypatch.setattr(social_auth_service, "verify_google", identity)
     linked = await client.post("/api/v1/auth/google", headers=headers, json={
         "id_token": "verified-by-provider", "link_to_current_user": True,
+        "display_name": "Google Player", "username": "google_player", "avatar_id": "avatar_5",
     })
     assert linked.status_code == 200, linked.text
     assert linked.json()["user_id"] == user_id
@@ -38,6 +39,7 @@ async def test_google_link_preserves_wallet_and_prevents_device_login(client, db
     new_headers = {"Authorization": f"Bearer {linked.json()['access_token']}"}
     me = await client.get("/api/v1/me", headers=new_headers)
     assert me.json()["wallet"]["coins"] == 4200
+    assert me.json()["profile"]["username"] == "google_player"
     again = await client.post("/api/v1/auth/google", json={"id_token": "verified-by-provider"})
     assert again.status_code == 200
     assert again.json()["user_id"] == user_id
@@ -50,10 +52,17 @@ async def test_google_link_conflict_and_auth_required(client, monkeypatch):
     async def identity(token):
         return {"id": "google-identity", "name": "Google Player"}
     monkeypatch.setattr(social_auth_service, "verify_google", identity)
-    first = await client.post("/api/v1/auth/google", json={"id_token": "verified"})
+    first = await client.post("/api/v1/auth/google", json={
+        "id_token": "verified",
+        "display_name": "Google Player",
+        "username": "google_primary",
+        "avatar_id": "avatar_1",
+    })
     assert first.status_code == 200, first.text
     second = await client.post("/api/v1/auth/register", json={
-        "email": "player@example.com", "password": "Password123!", "display_name": "Email Player", "device_id": "email-player-device",
+        "email": "player@example.com", "password": "Password123!",
+        "display_name": "Email Player", "username": "email_player",
+        "avatar_id": "avatar_2", "device_id": "email-player-device",
     })
     assert second.status_code == 200, second.text
     headers = {"Authorization": f"Bearer {second.json()['access_token']}"}
