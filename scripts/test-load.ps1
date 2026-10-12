@@ -7,7 +7,13 @@ param(
 Write-QualityHeader 'Load Validation'
 
 Assert-QualityTool 'python'
-$env:PYTHONPATH = "$script:RepoRoot;$script:RepoRoot/services/api;$script:RepoRoot/services/realtime"
+
+$pathSep = [System.IO.Path]::PathSeparator
+$env:PYTHONPATH = @(
+    $script:RepoRoot,
+    (Join-Path $script:RepoRoot 'services/api'),
+    (Join-Path $script:RepoRoot 'services/realtime')
+) -join $pathSep
 
 Invoke-QualityCommand 'REST/API load simulation' 'python' @('tests/e2e_load_test.py','--in-process','--clients',"$Clients",'--iterations',"$Iterations") $script:RepoRoot
 Invoke-QualityCommand 'Multiplayer stress simulation' 'python' @('tests/multiplayer/full_game_simulator.py','--games','300','--stress') $script:RepoRoot
