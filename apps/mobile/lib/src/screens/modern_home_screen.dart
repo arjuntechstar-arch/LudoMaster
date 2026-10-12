@@ -7,7 +7,6 @@ import 'package:game_engine/game_engine.dart';
 import '../controllers/game_controller.dart';
 import '../services/api_client.dart';
 import '../services/storage_service.dart';
-import '../theme/app_colors.dart';
 import '../widgets/app_loader.dart';
 import '../widgets/auth_dialog.dart';
 import '../widgets/play_with_friends_dialog.dart';
