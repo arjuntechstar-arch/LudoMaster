@@ -10,7 +10,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('App smoke test: ModernHomeScreen loads and navigates to SetupScreen', (tester) async {
+  testWidgets('App smoke test: game lobby loads and navigates to SetupScreen', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: LudoMasterApp(),
@@ -19,23 +19,16 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // Verify the redesigned home shell and bottom navigation are visible.
-    expect(find.text('For you'), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Play'), findsOneWidget);
-    expect(find.text('Progress'), findsOneWidget);
-    expect(find.text('Social'), findsOneWidget);
+    // The landing screen is a game lobby, not a standard app-tab dashboard.
+    expect(find.text('LUDO MASTER'), findsOneWidget);
+    expect(find.text('ONLINE'), findsOneWidget);
+    expect(find.text('FRIENDS'), findsOneWidget);
+    expect(find.text('VS COMPUTER'), findsOneWidget);
+    expect(find.text('PASS & PLAY'), findsOneWidget);
+    expect(find.byKey(const Key('mode-computer')), findsOneWidget);
 
-    // Open the dedicated Play tab introduced by the modern home redesign.
-    await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('How do you want to play?'), findsOneWidget);
-    expect(find.text('Vs Computer'), findsOneWidget);
-    expect(find.text('Pass & Play'), findsOneWidget);
-
-    // Navigate to the existing setup flow from the redesigned Play tab.
-    await tester.tap(find.text('Vs Computer'));
+    // Navigate into the existing setup flow from the game-style mode button.
+    await tester.tap(find.byKey(const Key('mode-computer')));
     await tester.pumpAndSettle();
 
     expect(find.text('VS COMPUTER'), findsOneWidget);
