@@ -36,7 +36,6 @@ class GameScreen extends ConsumerWidget {
         !session.isBotThinking &&
         !session.isAnimating;
 
-    // Check for game completion
     if (gameState.status == GameStatus.finished) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog<void>(
@@ -85,7 +84,6 @@ class GameScreen extends ConsumerWidget {
         .reversed
         .toList();
 
-    // Check for capture event to display funny comic animation
     final captureEvent = session.latestCaptureEvent;
     String capturingName = 'Player';
     String victimName = 'Opponent';
@@ -137,7 +135,6 @@ class GameScreen extends ConsumerWidget {
               builder: (context, constraints) {
                 return Column(
                   children: [
-                    // Top Player Panels
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -155,8 +152,6 @@ class GameScreen extends ConsumerWidget {
                         }).toList(),
                       ),
                     ),
-
-                    // Responsive Centered Board
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -177,8 +172,6 @@ class GameScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-
-                    // Bottom Player Panels
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -196,8 +189,6 @@ class GameScreen extends ConsumerWidget {
                         }).toList(),
                       ),
                     ),
-
-                    // Bottom Action Zone with Die Centered at Bottom
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -220,9 +211,7 @@ class GameScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Status guidance text
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
                                 width: 10,
@@ -244,30 +233,38 @@ class GameScreen extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                activePlayer.name,
-                                style: TextStyle(
-                                  color: AppColors.getPlayerColor(
-                                    activePlayer.color,
+                              Flexible(
+                                flex: 2,
+                                child: Text(
+                                  activePlayer.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.getPlayerColor(
+                                      activePlayer.color,
+                                    ),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
                                   ),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                '• ${_getStatusHint(gameState, session.isBotThinking)}',
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
+                              Flexible(
+                                flex: 3,
+                                child: Text(
+                                  '• ${_getStatusHint(gameState, session.isBotThinking)}',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
-
-                          // Prominent Bottom-Centered Dice Pedestal
                           Center(
                             child: Container(
                               padding: const EdgeInsets.all(4),
@@ -348,8 +345,6 @@ class GameScreen extends ConsumerWidget {
                 );
               },
             ),
-
-            // Funny Comic Cartoon Capture Animation Overlay
             if (captureEvent != null)
               Positioned.fill(
                 child: Container(
