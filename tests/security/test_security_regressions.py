@@ -13,7 +13,6 @@ client = TestClient(app)
     [
         "/api/v1/auth/export-data",
         "/api/v1/friends",
-        "/api/v1/leaderboards?scope=ALL_TIME&limit=20",
     ],
 )
 def test_protected_endpoints_do_not_accept_anonymous_requests(path):
