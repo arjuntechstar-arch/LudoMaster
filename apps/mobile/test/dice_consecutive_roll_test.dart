@@ -37,18 +37,21 @@ void main() {
           ),
         );
 
-        // First tap
         await tester.tap(find.byType(DiceWidget));
         expect(rollCount, equals(1));
 
-        // Immediate second tap while animation is running (300ms)
         await tester.pump(const Duration(milliseconds: 50));
         await tester.tap(find.byType(DiceWidget));
         expect(rollCount, equals(2));
 
-        // Settle animation
-        await tester.pumpAndSettle();
+        // DiceWidget intentionally runs a repeating idle animation while it can
+        // be rolled, so pumpAndSettle would never terminate. Advance a bounded
+        // amount of fake time and verify no extra roll is emitted.
+        await tester.pump(const Duration(seconds: 1));
         expect(rollCount, equals(2));
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
       },
     );
 
