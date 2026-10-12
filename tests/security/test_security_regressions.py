@@ -1,11 +1,57 @@
+import asyncio
+
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
+from app.db.base import Base
+from app.db.session import get_db
 from app.main import app
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def isolated_security_database():
+    """Provide the standalone security suite with an isolated SQLite schema."""
+    test_engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        echo=False,
+        poolclass=StaticPool,
+    )
+    session_maker = async_sessionmaker(
+        bind=test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    async def create_schema():
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    async def drop_schema():
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await test_engine.dispose()
+
+    async def override_get_db():
+        async with session_maker() as session:
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+
+    asyncio.run(create_schema())
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        yield
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+        asyncio.run(drop_schema())
 
 
 @pytest.mark.parametrize(
