@@ -28,6 +28,7 @@ import 'season_screen.dart';
 import 'setup_screen.dart';
 import 'store_inventory_screen.dart';
 import 'tournament_screen.dart';
+import 'tabbed_home_screen.dart';
 
 /// Game-first lobby inspired by successful casual board-game menus.
 ///
@@ -234,6 +235,19 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
       isScrollControlled: true,
       builder: (sheetContext) => _GameMenuSheet(
         roomInvites: _roomInvites,
+        onTabbedHome: () {
+          Navigator.pop(sheetContext);
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('Tabbed home')),
+                body: const TabbedHomeScreen(),
+              ),
+            ),
+          ).then((_) {
+            if (mounted) _bootstrap();
+          });
+        },
         onMissions: () {
           Navigator.pop(sheetContext);
           _openAuthenticated((api) => MissionsScreen(apiClient: api));
@@ -1243,6 +1257,7 @@ class _DockButton extends StatelessWidget {
 class _GameMenuSheet extends StatelessWidget {
   const _GameMenuSheet({
     required this.roomInvites,
+    required this.onTabbedHome,
     required this.onMissions,
     required this.onAchievements,
     required this.onSeason,
@@ -1255,6 +1270,7 @@ class _GameMenuSheet extends StatelessWidget {
   });
 
   final int roomInvites;
+  final VoidCallback onTabbedHome;
   final VoidCallback onMissions;
   final VoidCallback onAchievements;
   final VoidCallback onSeason;
@@ -1307,6 +1323,12 @@ class _GameMenuSheet extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
+              TextButton.icon(
+                onPressed: onTabbedHome,
+                icon: const Icon(Icons.dashboard_rounded),
+                label: const Text('Tabbed home'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+              ),
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
