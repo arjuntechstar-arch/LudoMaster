@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/main.dart';
@@ -10,36 +11,48 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('App smoke test: ModernHomeScreen loads and navigates to SetupScreen', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: LudoMasterApp(),
-      ),
-    );
+  testWidgets(
+    'App smoke test: game lobby loads and navigates to SetupScreen',
+    (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: LudoMasterApp(),
+        ),
+      );
 
-    await tester.pumpAndSettle();
+      // The lobby contains a deliberately repeating pulse animation, so
+      // pumpAndSettle() can never complete while this screen is mounted.
+      // Pump bounded frames until startup/auth bootstrap exposes the mode grid.
+      for (
+        var i = 0;
+        i < 20 &&
+            find.byKey(const Key('mode-computer')).evaluate().isEmpty;
+        i++
+      ) {
+        await tester.pump(const Duration(milliseconds: 500));
+      }
 
-    // Verify the redesigned home shell and bottom navigation are visible.
-    expect(find.text('For you'), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Play'), findsOneWidget);
-    expect(find.text('Progress'), findsOneWidget);
-    expect(find.text('Social'), findsOneWidget);
+      // The landing screen is a game lobby, not a standard app-tab dashboard.
+      expect(find.text('LUDO MASTER'), findsOneWidget);
+      expect(find.text('ONLINE'), findsOneWidget);
+      expect(find.text('FRIENDS'), findsOneWidget);
+      expect(find.text('VS COMPUTER'), findsOneWidget);
+      expect(find.text('PASS & PLAY'), findsOneWidget);
+      expect(find.byKey(const Key('mode-computer')), findsOneWidget);
 
-    // Open the dedicated Play tab introduced by the modern home redesign.
-    await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
+      // Navigate into the existing setup flow from the game-style mode button.
+      await tester.tap(find.byKey(const Key('mode-computer')));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('How do you want to play?'), findsOneWidget);
-    expect(find.text('Vs Computer'), findsOneWidget);
-    expect(find.text('Pass & Play'), findsOneWidget);
+      expect(find.text('VS COMPUTER'), findsOneWidget);
+      expect(find.text('START MATCH'), findsOneWidget);
+      expect(find.text('4 Players'), findsOneWidget);
 
-    // Navigate to the existing setup flow from the redesigned Play tab.
-    await tester.tap(find.text('Vs Computer'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('VS COMPUTER'), findsOneWidget);
-    expect(find.text('START MATCH'), findsOneWidget);
-    expect(find.text('4 Players'), findsOneWidget);
-  });
+      // Explicitly unmount the lobby so its repeating animation and timers are
+      // disposed before the test completes.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
 }
