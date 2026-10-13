@@ -37,9 +37,12 @@ void main() {
       expect(find.text('COMPUTER'), findsOneWidget);
       expect(find.text('PASS N PLAY'), findsOneWidget);
       expect(find.text('TOURNAMENT'), findsOneWidget);
-      expect(find.byKey(const Key('mode-computer')), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('mode-computer')));
+      final computerMode = find.byKey(const Key('mode-computer'));
+      expect(computerMode, findsOneWidget);
+      await tester.ensureVisible(computerMode);
+      await tester.pump();
+      await tester.tap(computerMode);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
 
