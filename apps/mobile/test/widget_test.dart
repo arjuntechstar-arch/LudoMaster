@@ -20,9 +20,8 @@ void main() {
         ),
       );
 
-      // The lobby contains a deliberately repeating pulse animation, so
-      // pumpAndSettle() can never complete while this screen is mounted.
-      // Pump bounded frames until startup/auth bootstrap exposes the mode grid.
+      // Startup/account bootstrap is asynchronous. Pump bounded frames until
+      // the game-mode grid is available instead of relying on network settling.
       for (
         var i = 0;
         i < 20 &&
@@ -32,15 +31,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 500));
       }
 
-      // The landing screen is a game lobby, not a standard app-tab dashboard.
       expect(find.text('LUDO MASTER'), findsOneWidget);
       expect(find.text('ONLINE'), findsOneWidget);
       expect(find.text('FRIENDS'), findsOneWidget);
-      expect(find.text('VS COMPUTER'), findsOneWidget);
-      expect(find.text('PASS & PLAY'), findsOneWidget);
+      expect(find.text('COMPUTER'), findsOneWidget);
+      expect(find.text('PASS N PLAY'), findsOneWidget);
+      expect(find.text('TOURNAMENT'), findsOneWidget);
       expect(find.byKey(const Key('mode-computer')), findsOneWidget);
 
-      // Navigate into the existing setup flow from the game-style mode button.
       await tester.tap(find.byKey(const Key('mode-computer')));
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
@@ -49,8 +47,6 @@ void main() {
       expect(find.text('START MATCH'), findsOneWidget);
       expect(find.text('4 Players'), findsOneWidget);
 
-      // Explicitly unmount the lobby so its repeating animation and timers are
-      // disposed before the test completes.
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
     },
