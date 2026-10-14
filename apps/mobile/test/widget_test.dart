@@ -12,7 +12,7 @@ void main() {
   });
 
   testWidgets(
-    'App smoke test: game lobby loads and navigates to SetupScreen',
+    'App smoke test: reference lobby loads and navigates to SetupScreen',
     (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
@@ -20,8 +20,6 @@ void main() {
         ),
       );
 
-      // Startup/account bootstrap is asynchronous. Pump bounded frames until
-      // the game-mode grid is available instead of relying on network settling.
       for (
         var i = 0;
         i < 20 &&
@@ -31,12 +29,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 500));
       }
 
-      expect(find.text('LUDO MASTER'), findsOneWidget);
+      expect(find.text('KING'), findsOneWidget);
       expect(find.text('ONLINE'), findsOneWidget);
+      expect(find.text('TEAM UP'), findsOneWidget);
       expect(find.text('FRIENDS'), findsOneWidget);
       expect(find.text('COMPUTER'), findsOneWidget);
       expect(find.text('PASS N PLAY'), findsOneWidget);
       expect(find.text('TOURNAMENT'), findsOneWidget);
+      expect(find.text('CLAIM'), findsOneWidget);
 
       final computerMode = find.byKey(const Key('mode-computer'));
       expect(computerMode, findsOneWidget);
