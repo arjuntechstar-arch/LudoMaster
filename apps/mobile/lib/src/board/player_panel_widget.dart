@@ -26,8 +26,10 @@ class PlayerPanelWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = AppColors.getPlayerColor(player.color);
 
+    // Keep a pair of panels inside a 320px viewport even with the game
+    // screen's horizontal padding. Text already ellipsizes where required.
     final panel = SizedBox(
-      width: compact ? 132 : 148,
+      width: compact ? 124 : 140,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         padding: EdgeInsets.symmetric(

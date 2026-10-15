@@ -52,7 +52,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Achievement Reward Claimed: +${res.coinsAwarded} Coins, +${res.gemsAwarded} Gems, +${res.xpAwarded} XP!'),
+          content: Text(
+            'Achievement Reward Claimed: +${res.coinsAwarded} Coins, +${res.gemsAwarded} Gems, +${res.xpAwarded} XP!',
+          ),
           backgroundColor: const Color(0xFF22C55E),
         ),
       );
@@ -60,7 +62,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to claim: $e'), backgroundColor: const Color(0xFFEF4444)),
+        SnackBar(
+          content: Text('Failed to claim: $e'),
+          backgroundColor: const Color(0xFFEF4444),
+        ),
       );
     }
   }
@@ -71,25 +76,32 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('ACHIEVEMENTS & BADGES'),
-      ),
+      appBar: AppBar(title: const Text('ACHIEVEMENTS & BADGES')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
           : _errorMessage != null
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Error: $_errorMessage', style: const TextStyle(color: Color(0xFFEF4444))),
-                      const SizedBox(height: 12),
-                      ElevatedButton(onPressed: _loadAchievements, child: const Text('Retry')),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Error: $_errorMessage',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Color(0xFFEF4444)),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _loadAchievements,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : Column(
                   children: [
-                    // Overview Banner
                     Container(
                       margin: const EdgeInsets.all(16),
                       padding: const EdgeInsets.all(16),
@@ -98,11 +110,17 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           colors: [Color(0xFF1E293B), Color(0xFF334155)],
                         ),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.military_tech, color: AppColors.gold, size: 40),
+                          const Icon(
+                            Icons.military_tech,
+                            color: AppColors.gold,
+                            size: 40,
+                          ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Column(
@@ -119,7 +137,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   '$unlockedCount of ${_achievements.length} Achievements Unlocked',
-                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                  style: const TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ],
                             ),
@@ -127,19 +148,21 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         ],
                       ),
                     ),
-
-                    // List of Achievements
                     Expanded(
                       child: RefreshIndicator(
                         onRefresh: _loadAchievements,
                         color: AppColors.gold,
                         child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           itemCount: _achievements.length,
                           separatorBuilder: (_, _) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final a = _achievements[index];
-                            final progress = (a.currentCount / a.targetCount).clamp(0.0, 1.0);
+                            final progress =
+                                (a.currentCount / a.targetCount).clamp(0.0, 1.0);
                             final canClaim = a.isUnlocked && !a.isClaimed;
 
                             return Container(
@@ -150,7 +173,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                 border: Border.all(
                                   color: canClaim
                                       ? AppColors.gold
-                                      : (a.isUnlocked ? const Color(0xFF22C55E) : Colors.white12),
+                                      : (a.isUnlocked
+                                            ? const Color(0xFF22C55E)
+                                            : Colors.white12),
                                   width: canClaim ? 1.5 : 1.0,
                                 ),
                               ),
@@ -158,6 +183,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Container(
                                         width: 44,
@@ -169,8 +195,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                               : Colors.white10,
                                         ),
                                         child: Icon(
-                                          a.isUnlocked ? Icons.emoji_events : Icons.lock,
-                                          color: a.isUnlocked ? AppColors.gold : Colors.white38,
+                                          a.isUnlocked
+                                              ? Icons.emoji_events
+                                              : Icons.lock,
+                                          color: a.isUnlocked
+                                              ? AppColors.gold
+                                              : Colors.white38,
                                         ),
                                       ),
                                       const SizedBox(width: 14),
@@ -181,7 +211,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                             Text(
                                               a.title,
                                               style: TextStyle(
-                                                color: a.isUnlocked ? Colors.white : Colors.white60,
+                                                color: a.isUnlocked
+                                                    ? Colors.white
+                                                    : Colors.white60,
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -189,36 +221,67 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                             const SizedBox(height: 2),
                                             Text(
                                               a.description,
-                                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                                              style: const TextStyle(
+                                                color: Color(0xFF94A3B8),
+                                                fontSize: 12,
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      if (canClaim)
-                                        ElevatedButton(
-                                          onPressed: () => _claimAchievement(a.id),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppColors.gold,
-                                            foregroundColor: Colors.black,
-                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                          ),
-                                          child: const Text('CLAIM', style: TextStyle(fontWeight: FontWeight.bold)),
-                                        )
-                                      else if (a.isClaimed)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF22C55E).withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: const Text(
-                                            'UNLOCKED',
-                                            style: TextStyle(color: Color(0xFF22C55E), fontSize: 11, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
                                     ],
                                   ),
+                                  if (canClaim || a.isClaimed) ...[
+                                    const SizedBox(height: 10),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: canClaim
+                                          ? ElevatedButton(
+                                              onPressed: () =>
+                                                  _claimAchievement(a.id),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppColors.gold,
+                                                foregroundColor: Colors.black,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 14,
+                                                  vertical: 8,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                'CLAIM',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            )
+                                          : Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF22C55E)
+                                                    .withValues(alpha: 0.15),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              child: const Text(
+                                                'UNLOCKED',
+                                                style: TextStyle(
+                                                  color: Color(0xFF22C55E),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                  ],
                                   const SizedBox(height: 12),
                                   Row(
                                     children: [
@@ -228,8 +291,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                           child: LinearProgressIndicator(
                                             value: progress,
                                             backgroundColor: Colors.white10,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              a.isUnlocked ? const Color(0xFF22C55E) : AppColors.gold,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              a.isUnlocked
+                                                  ? const Color(0xFF22C55E)
+                                                  : AppColors.gold,
                                             ),
                                             minHeight: 8,
                                           ),
@@ -238,28 +304,37 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                       const SizedBox(width: 12),
                                       Text(
                                         '${a.currentCount} / ${a.targetCount}',
-                                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                          color: Color(0xFF94A3B8),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 10),
-                                  Row(
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 6,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
                                     children: [
-                                      if (a.rewardCoins > 0) ...[
-                                        const Icon(Icons.monetization_on, color: AppColors.gold, size: 14),
-                                        const SizedBox(width: 4),
-                                        Text('+${a.rewardCoins}', style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                                        const SizedBox(width: 10),
-                                      ],
-                                      if (a.rewardGems > 0) ...[
-                                        const Icon(Icons.diamond, color: Color(0xFF38BDF8), size: 14),
-                                        const SizedBox(width: 4),
-                                        Text('+${a.rewardGems}', style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                                        const SizedBox(width: 10),
-                                      ],
-                                      const Icon(Icons.star, color: Color(0xFFA855F7), size: 14),
-                                      const SizedBox(width: 4),
-                                      Text('+${a.rewardXp} XP', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                                      if (a.rewardCoins > 0)
+                                        _RewardLabel(
+                                          icon: Icons.monetization_on,
+                                          color: AppColors.gold,
+                                          text: '+${a.rewardCoins}',
+                                        ),
+                                      if (a.rewardGems > 0)
+                                        _RewardLabel(
+                                          icon: Icons.diamond,
+                                          color: const Color(0xFF38BDF8),
+                                          text: '+${a.rewardGems}',
+                                        ),
+                                      _RewardLabel(
+                                        icon: Icons.star,
+                                        color: const Color(0xFFA855F7),
+                                        text: '+${a.rewardXp} XP',
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -273,4 +348,29 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
     );
   }
+}
+
+class _RewardLabel extends StatelessWidget {
+  const _RewardLabel({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+        ],
+      );
 }

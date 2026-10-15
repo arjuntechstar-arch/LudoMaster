@@ -41,39 +41,41 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               Expanded(
                 child: ListView(
                   children: [
-                    // Game Mode Selection
                     _buildSectionHeader('Game Mode'),
                     const SizedBox(height: 10),
-                    SegmentedButton<SetupGameMode>(
-                      segments: const [
-                        ButtonSegment(
-                          value: SetupGameMode.classic,
-                          label: Text('Classic'),
-                          icon: Icon(Icons.casino),
-                        ),
-                        ButtonSegment(
-                          value: SetupGameMode.quick,
-                          label: Text('Quick'),
-                          icon: Icon(Icons.flash_on),
-                        ),
-                        ButtonSegment(
-                          value: SetupGameMode.team,
-                          label: Text('2v2 Team'),
-                          icon: Icon(Icons.group),
-                        ),
-                      ],
-                      selected: {_mode},
-                      onSelectionChanged: (val) {
-                        setState(() {
-                          _mode = val.first;
-                          if (_mode == SetupGameMode.team) {
-                            _playerCount = 4;
-                          }
-                        });
-                      },
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<SetupGameMode>(
+                        showSelectedIcon: false,
+                        segments: const [
+                          ButtonSegment(
+                            value: SetupGameMode.classic,
+                            label: Text('Classic'),
+                            icon: Icon(Icons.casino),
+                          ),
+                          ButtonSegment(
+                            value: SetupGameMode.quick,
+                            label: Text('Quick'),
+                            icon: Icon(Icons.flash_on),
+                          ),
+                          ButtonSegment(
+                            value: SetupGameMode.team,
+                            label: Text('2v2 Team'),
+                            icon: Icon(Icons.group),
+                          ),
+                        ],
+                        selected: {_mode},
+                        onSelectionChanged: (val) {
+                          setState(() {
+                            _mode = val.first;
+                            if (_mode == SetupGameMode.team) {
+                              _playerCount = 4;
+                            }
+                          });
+                        },
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    // Mode description card
                     Card(
                       color: AppColors.surfaceCard,
                       child: Padding(
@@ -110,30 +112,34 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Player Count (hidden/locked if Team mode)
                     if (_mode != SetupGameMode.team) ...[
                       _buildSectionHeader('Number of Players'),
                       const SizedBox(height: 10),
-                      SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment(value: 2, label: Text('2 Players')),
-                          ButtonSegment(value: 3, label: Text('3 Players')),
-                          ButtonSegment(value: 4, label: Text('4 Players')),
-                        ],
-                        selected: {_playerCount},
-                        onSelectionChanged: (val) {
-                          setState(() => _playerCount = val.first);
-                        },
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SegmentedButton<int>(
+                          showSelectedIcon: false,
+                          segments: const [
+                            ButtonSegment(value: 2, label: Text('2 Players')),
+                            ButtonSegment(value: 3, label: Text('3 Players')),
+                            ButtonSegment(value: 4, label: Text('4 Players')),
+                          ],
+                          selected: {_playerCount},
+                          onSelectionChanged: (val) {
+                            setState(() => _playerCount = val.first);
+                          },
+                        ),
                       ),
                       const SizedBox(height: 24),
                     ],
 
-                    // Bot Options (if Vs Computer)
                     if (widget.isVsComputer) ...[
                       _buildSectionHeader('Your Color'),
                       const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      Wrap(
+                        alignment: WrapAlignment.spaceEvenly,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: PlayerColor.values.take(4).map((color) {
                           final isSelected = _humanColor == color;
                           final pColor = AppColors.getPlayerColor(color);
@@ -174,32 +180,36 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
                       _buildSectionHeader('Bot Difficulty'),
                       const SizedBox(height: 10),
-                      SegmentedButton<BotDifficulty>(
-                        segments: const [
-                          ButtonSegment(
-                            value: BotDifficulty.easy,
-                            label: Text('Easy'),
-                          ),
-                          ButtonSegment(
-                            value: BotDifficulty.medium,
-                            label: Text('Medium'),
-                          ),
-                          ButtonSegment(
-                            value: BotDifficulty.hard,
-                            label: Text('Hard'),
-                          ),
-                        ],
-                        selected: {_difficulty},
-                        onSelectionChanged: (val) {
-                          setState(() => _difficulty = val.first);
-                        },
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SegmentedButton<BotDifficulty>(
+                          showSelectedIcon: false,
+                          segments: const [
+                            ButtonSegment(
+                              value: BotDifficulty.easy,
+                              label: Text('Easy'),
+                            ),
+                            ButtonSegment(
+                              value: BotDifficulty.medium,
+                              label: Text('Medium'),
+                            ),
+                            ButtonSegment(
+                              value: BotDifficulty.hard,
+                              label: Text('Hard'),
+                            ),
+                          ],
+                          selected: {_difficulty},
+                          onSelectionChanged: (val) {
+                            setState(() => _difficulty = val.first);
+                          },
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
 
-              // Start Match Action
+              const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: _startMatch,
                 style: ElevatedButton.styleFrom(
@@ -256,9 +266,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     ];
 
     if (_mode == SetupGameMode.team) {
-      // Team 2v2: Fixed 4 players
-      // Seats 0 & 2: Team 0 (Red & Yellow)
-      // Seats 1 & 3: Team 1 (Green & Blue)
       for (final c in allColors) {
         final seat = c.seatIndex;
         final teamId = (seat % 2 == 0) ? 0 : 1;
@@ -291,7 +298,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         );
       }
     } else if (widget.isVsComputer) {
-      // In a two-player game, place the opponents diagonally across the board.
       final opponentColor = PlayerColor.values[(_humanColor.index + 2) % 4];
       final otherColors = allColors.where((c) => c != _humanColor).toList();
       final selectedColors = [
@@ -314,7 +320,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         );
       }
     } else {
-      // Pass & Play (Local Humans)
       final selectedColors = _playerCount == 2
           ? [PlayerColor.red, PlayerColor.yellow]
           : allColors.take(_playerCount).toList();
@@ -335,7 +340,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       }
     }
 
-    // Sort players by seat ascending
     players.sort((a, b) => a.seat.compareTo(b.seat));
 
     ref
