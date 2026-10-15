@@ -88,7 +88,10 @@ class PlayerPanelWidget extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: compact ? 1 : 2),
-                  Row(
+                  Wrap(
+                    spacing: 2,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Icon(
                         Icons.home,
@@ -106,26 +109,24 @@ class PlayerPanelWidget extends StatelessWidget {
                       ),
                       if (player.teamId != null) ...[
                         const SizedBox(width: 4),
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: player.teamId == 0
-                                  ? const Color(0xFFE65100)
-                                  : const Color(0xFF0277BD),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'T${player.teamId! + 1}',
-                              maxLines: 1,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: player.teamId == 0
+                                ? const Color(0xFFE65100)
+                                : const Color(0xFF0277BD),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'T${player.teamId! + 1}',
+                            maxLines: 1,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),

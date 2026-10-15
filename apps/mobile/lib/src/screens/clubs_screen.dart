@@ -101,7 +101,7 @@ class _ClubsScreenState extends State<ClubsScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.surfaceCard,
         title: const Text('Leave Club', style: TextStyle(color: Colors.white)),
         content: Text(
           'Are you sure you want to leave ${_myClub!.name}?',
@@ -158,7 +158,7 @@ class _ClubsScreenState extends State<ClubsScreen>
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.surfaceCard,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -200,7 +200,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                     labelText: 'Club Name',
                     labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
                     filled: true,
-                    fillColor: const Color(0xFF0F172A),
+                    fillColor: AppColors.background,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -215,7 +215,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                     labelText: 'Tag (e.g. CHAMP)',
                     labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
                     filled: true,
-                    fillColor: const Color(0xFF0F172A),
+                    fillColor: AppColors.background,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -230,7 +230,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                     labelText: 'Description',
                     labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
                     filled: true,
-                    fillColor: const Color(0xFF0F172A),
+                    fillColor: AppColors.background,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -249,7 +249,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                     const SizedBox(width: 12),
                     DropdownButton<int>(
                       value: minLevel,
-                      dropdownColor: const Color(0xFF1E293B),
+                      dropdownColor: AppColors.surfaceCard,
                       style: const TextStyle(color: Colors.white),
                       items: [1, 2, 5, 10, 20].map((l) {
                         return DropdownMenuItem<int>(
@@ -345,13 +345,13 @@ class _ClubsScreenState extends State<ClubsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Clubs & Social Rooms',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.surfaceCard,
         elevation: 0,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
@@ -410,8 +410,8 @@ class _ClubsScreenState extends State<ClubsScreen>
   Widget _buildMyClubTab() {
     if (_myClub == null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 96),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -419,7 +419,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.surfaceCard,
                   border: Border.all(
                     color: AppColors.gold.withValues(alpha: 0.3),
                     width: 2,
@@ -629,7 +629,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.surfaceCard,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isLeader
@@ -754,7 +754,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                     )
                   : null,
               filled: true,
-              fillColor: const Color(0xFF1E293B),
+              fillColor: AppColors.surfaceCard,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
@@ -783,7 +783,7 @@ class _ClubsScreenState extends State<ClubsScreen>
                       return Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
+                          color: AppColors.surfaceCard,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.05),

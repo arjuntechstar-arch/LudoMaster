@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_client.dart';
 import '../theme/app_colors.dart';
 
@@ -76,7 +77,11 @@ class _NotificationsDialogState extends State<NotificationsDialog> {
           children: [
             Row(
               children: [
-                const Icon(Icons.notifications_active, color: AppColors.gold, size: 20),
+                const Icon(
+                  Icons.notifications_active,
+                  color: AppColors.gold,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -88,19 +93,19 @@ class _NotificationsDialogState extends State<NotificationsDialog> {
                     ),
                   ),
                 ),
-                TextButton(
-                  onPressed: _notifications.any((n) => !n.isRead) ? _markAllRead : null,
-                  child: Text(
-                    'MARK ALL AS READ',
-                    style: TextStyle(
-                      color: _notifications.any((n) => !n.isRead) ? AppColors.green : AppColors.textMuted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                IconButton(
+                  tooltip: 'Mark all as read',
+                  onPressed: _notifications.any((n) => !n.isRead)
+                      ? _markAllRead
+                      : null,
+                  icon: const Icon(Icons.done_all),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                  icon: const Icon(
+                    Icons.close,
+                    color: AppColors.textSecondary,
+                    size: 18,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () => Navigator.of(context).pop(),
@@ -110,100 +115,126 @@ class _NotificationsDialogState extends State<NotificationsDialog> {
             const Divider(color: AppColors.surfaceElevated, height: 16),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.gold),
+                    )
                   : _errorMessage != null
-                      ? Center(child: Text(_errorMessage!, style: const TextStyle(color: AppColors.red)))
-                      : _notifications.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.mark_email_read_outlined, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'No notifications yet',
-                                    style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.separated(
-                              itemCount: _notifications.length,
-                              separatorBuilder: (_, index) => const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final n = _notifications[index];
-                                return InkWell(
-                                  onTap: () => _markRead(n),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: n.isRead ? AppColors.surfaceElevated.withValues(alpha: 0.5) : AppColors.surfaceElevated,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: n.isRead ? AppColors.surfaceElevated : AppColors.gold.withValues(alpha: 0.4),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: _getCategoryColor(n.category).withValues(alpha: 0.2),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            _getCategoryIcon(n.category),
-                                            color: _getCategoryColor(n.category),
-                                            size: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      n.title,
-                                                      style: TextStyle(
-                                                        fontWeight: n.isRead ? FontWeight.w600 : FontWeight.bold,
-                                                        color: AppColors.textPrimary,
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  if (!n.isRead)
-                                                    Container(
-                                                      width: 8,
-                                                      height: 8,
-                                                      decoration: const BoxDecoration(
-                                                        color: AppColors.red,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                n.body,
-                                                style: const TextStyle(
-                                                  color: AppColors.textSecondary,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
+                  ? Center(
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: AppColors.red),
+                      ),
+                    )
+                  : _notifications.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.mark_email_read_outlined,
+                            size: 48,
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.4,
                             ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No notifications yet',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: _notifications.length,
+                      separatorBuilder: (_, index) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final n = _notifications[index];
+                        return InkWell(
+                          onTap: () => _markRead(n),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: n.isRead
+                                  ? AppColors.surfaceElevated.withValues(
+                                      alpha: 0.5,
+                                    )
+                                  : AppColors.surfaceElevated,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: n.isRead
+                                    ? AppColors.surfaceElevated
+                                    : AppColors.gold.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: _getCategoryColor(n.category)
+                                        .withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _getCategoryIcon(n.category),
+                                    color: _getCategoryColor(n.category),
+                                    size: 16,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              n.title,
+                                              style: TextStyle(
+                                                fontWeight: n.isRead
+                                                    ? FontWeight.w600
+                                                    : FontWeight.bold,
+                                                color: AppColors.textPrimary,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                          if (!n.isRead)
+                                            Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        n.body,
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

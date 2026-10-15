@@ -104,124 +104,130 @@ class _DailyRewardsDialogState extends State<DailyRewardsDialog> {
           width: 1.5,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header with flame icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.local_fire_department,
-                      color: Color(0xFFF97316),
-                      size: 28,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'DAILY REWARDS',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white60),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _status != null
-                  ? 'Streak: ${_status!.currentStreak} Days • Log in daily for grand rewards!'
-                  : 'Log in every day to claim bonus coins, gems & XP!',
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-            ),
-            const SizedBox(height: 16),
-
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: CircularProgressIndicator(color: AppColors.gold),
-              )
-            else if (_message != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _message!,
-                      style: const TextStyle(color: Color(0xFFEF4444)),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _fetchStatus,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('RETRY'),
-                    ),
-                  ],
-                ),
-              )
-            else if (_status != null) ...[
-              // Grid of 7 days
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                children: _status!.days
-                    .map((day) => _buildDayCard(day))
-                    .toList(),
-              ),
-              const SizedBox(height: 20),
-
-              // Action button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: (_status!.canClaim && !_isClaiming)
-                      ? _claim
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    disabledBackgroundColor: Colors.white12,
-                    disabledForegroundColor: Colors.white38,
-                  ),
-                  child: _isClaiming
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.black,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          _status!.canClaim
-                              ? 'CLAIM DAY ${_status!.days.firstWhere((d) => d.isToday, orElse: () => _status!.days.first).day} REWARD'
-                              : 'ALREADY CLAIMED TODAY',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with flame icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.local_fire_department,
+                          color: Color(0xFFF97316),
+                          size: 28,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'DAILY REWARDS',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
                           ),
                         ),
-                ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white60),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
               ),
+              const SizedBox(height: 6),
+              Text(
+                _status != null
+                    ? 'Streak: ${_status!.currentStreak} Days • Log in daily for grand rewards!'
+                    : 'Log in every day to claim bonus coins, gems & XP!',
+                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: CircularProgressIndicator(color: AppColors.gold),
+                )
+              else if (_message != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _message!,
+                        style: const TextStyle(color: Color(0xFFEF4444)),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _fetchStatus,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('RETRY'),
+                      ),
+                    ],
+                  ),
+                )
+              else if (_status != null) ...[
+                // Grid of 7 days
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: _status!.days
+                      .map((day) => _buildDayCard(day))
+                      .toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Action button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: (_status!.canClaim && !_isClaiming)
+                        ? _claim
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.gold,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      disabledBackgroundColor: Colors.white12,
+                      disabledForegroundColor: Colors.white38,
+                    ),
+                    child: _isClaiming
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            _status!.canClaim
+                                ? 'CLAIM DAY ${_status!.days.firstWhere((d) => d.isToday, orElse: () => _status!.days.first).day} REWARD'
+                                : 'ALREADY CLAIMED TODAY',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

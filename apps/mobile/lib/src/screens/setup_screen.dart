@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controllers/game_controller.dart';
 import '../theme/app_colors.dart';
+import '../widgets/mobile_ui.dart';
 import 'game_screen.dart';
 
 /// Screen allowing players to configure player counts, rules, and bot difficulty before starting.
@@ -41,6 +42,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               Expanded(
                 child: ListView(
                   children: [
+                    const MobileHeading(
+                      'Set up your table',
+                      subtitle: 'Choose your rules, gather your players, and make the first move.',
+                    ),
                     _buildSectionHeader('Game Mode'),
                     const SizedBox(height: 10),
                     SingleChildScrollView(

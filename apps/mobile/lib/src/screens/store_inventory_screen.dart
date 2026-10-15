@@ -80,7 +80,8 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
     });
 
     try {
-      final catalogFuture = widget.apiClient.getCatalog();
+      final catalog = await widget.apiClient.getCatalog();
+      final catalogFuture = Future.value(catalog);
       final inventoryFuture = widget.apiClient.getInventory();
       final meFuture = widget.apiClient.getMyAccount();
       final iapFuture = widget.apiClient.getIapProducts();
@@ -91,7 +92,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
         meFuture,
         iapFuture.catchError((_) => <IapProductModel>[]),
       ]);
-      final catalog = results[0] as List<CatalogItemModel>;
+      final loadedCatalog = results[0] as List<CatalogItemModel>;
       final inventory = results[1] as List<CatalogItemModel>;
       CosmeticSelection.applyInventory(inventory);
       final me = results[2] as UserMeModel;
@@ -100,7 +101,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
 
       if (mounted) {
         setState(() {
-          _catalog = catalog;
+          _catalog = loadedCatalog;
           _inventory = inventory;
           _iapProducts = iap;
           _userCoins = me.wallet.coins;
@@ -111,7 +112,8 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _errorMessage =
+              'The store could not load. Check your connection and try again.';
           _isLoading = false;
         });
       }
@@ -372,8 +374,14 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('STORE & CUSTOMIZATION'),
+        title: const Text(
+          'STORE & CUSTOMIZATION',
+          maxLines: 2,
+          style: TextStyle(fontSize: 16, height: 1.1),
+        ),
         bottom: TabBar(
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           controller: _tabController,
           indicatorColor: AppColors.gold,
           labelColor: AppColors.gold,
@@ -392,7 +400,10 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               color: AppColors.surface,
-              child: Row(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   const Text(
                     'Your Balance',
@@ -402,7 +413,6 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Spacer(),
                   _buildBalanceChip(
                     icon: Icons.monetization_on,
                     amount: _userCoins,
@@ -552,11 +562,14 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
       color: AppColors.gold,
       child: GridView.builder(
         padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: (MediaQuery.sizeOf(context).width / 190)
+              .floor()
+              .clamp(1, 5),
           crossAxisSpacing: 14,
           mainAxisSpacing: 14,
-          childAspectRatio: 0.72,
+          mainAxisExtent:
+              270 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5),
         ),
         itemCount: filtered.length,
         itemBuilder: (context, index) {
@@ -600,11 +613,14 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
       color: AppColors.gold,
       child: GridView.builder(
         padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: (MediaQuery.sizeOf(context).width / 190)
+              .floor()
+              .clamp(1, 5),
           crossAxisSpacing: 14,
           mainAxisSpacing: 14,
-          childAspectRatio: 0.72,
+          mainAxisExtent:
+              270 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5),
         ),
         itemCount: filtered.length,
         itemBuilder: (context, index) {
@@ -665,11 +681,15 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
             color: AppColors.gold,
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: (MediaQuery.sizeOf(context).width / 190)
+                    .floor()
+                    .clamp(1, 5),
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
-                childAspectRatio: 0.72,
+                mainAxisExtent:
+                    270 *
+                    MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5),
               ),
               itemCount: _iapProducts.length,
               itemBuilder: (context, index) {
@@ -899,8 +919,10 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
           // Rarity & Equiped Header
           Padding(
             padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(

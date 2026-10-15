@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
 import '../theme/app_colors.dart';
+import '../widgets/mobile_ui.dart';
 import 'online_game_screen.dart';
 
 class MatchmakingScreen extends StatefulWidget {
@@ -73,7 +74,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
         return;
       }
 
-      _pollTimer = Timer.periodic(const Duration(milliseconds: 1500), (t) async {
+      _pollTimer = Timer.periodic(const Duration(milliseconds: 1500), (
+        t,
+      ) async {
         if (!_isSearching || _ticketId == null || !mounted) {
           t.cancel();
           return;
@@ -140,7 +143,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final horizontalPadding = MediaQuery.sizeOf(context).width < 360 ? 16.0 : 24.0;
+    final horizontalPadding = MediaQuery.sizeOf(context).width < 360
+        ? 16.0
+        : 24.0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -158,8 +163,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
         child: CustomScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
+            SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: horizontalPadding,
@@ -169,6 +173,10 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (!_isSearching) ...[
+                      const MobileHeading(
+                        'Meet your next rivals',
+                        subtitle: 'Choose a table. We’ll find the players.',
+                      ),
                       const Text(
                         'SELECT PLAYERS',
                         style: TextStyle(
@@ -184,12 +192,17 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                           final isSelected = _playerCount == count;
                           return Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               child: InkWell(
-                                onTap: () => setState(() => _playerCount = count),
+                                onTap: () =>
+                                    setState(() => _playerCount = count),
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? (count == 6
@@ -209,8 +222,12 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                                       Icon(
                                         count == 6
                                             ? Icons.hexagon
-                                            : (count == 4 ? Icons.groups : Icons.person),
-                                        color: isSelected ? Colors.black : Colors.white70,
+                                            : (count == 4
+                                                  ? Icons.groups
+                                                  : Icons.person),
+                                        color: isSelected
+                                            ? Colors.black
+                                            : Colors.white70,
                                         size: 26,
                                       ),
                                       const SizedBox(height: 6),
@@ -220,7 +237,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                                           '$count Players',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: isSelected ? Colors.black : Colors.white,
+                                            color: isSelected
+                                                ? Colors.black
+                                                : Colors.white,
                                             fontSize: 13,
                                           ),
                                         ),
@@ -302,15 +321,21 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                           final isSelected = _betCoins == coins;
                           return Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               child: InkWell(
                                 onTap: () => setState(() => _betCoins = coins),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? AppColors.amber.withValues(alpha: 0.25)
+                                        ? AppColors.amber.withValues(
+                                            alpha: 0.25,
+                                          )
                                         : AppColors.cardBackground,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
@@ -335,7 +360,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                                           '$coins',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: isSelected ? AppColors.gold : Colors.white,
+                                            color: isSelected
+                                                ? AppColors.gold
+                                                : Colors.white,
                                           ),
                                         ),
                                       ],
@@ -349,7 +376,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                       ),
                     ],
 
-                    const Spacer(),
+                    const SizedBox(height: 24),
 
                     if (_isSearching) ...[
                       Center(
@@ -365,7 +392,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: AppColors.gold.withValues(
-                                      alpha: (1.0 - _pulseController.value) * 0.4,
+                                      alpha:
+                                          (1.0 - _pulseController.value) * 0.4,
                                     ),
                                     width: 2,
                                   ),
@@ -382,10 +410,13 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: (_playerCount == 6
-                                              ? const Color(0xFF8B5CF6)
-                                              : AppColors.blue)
-                                          .withValues(alpha: (1.0 - v) * 0.5),
+                                      color:
+                                          (_playerCount == 6
+                                                  ? const Color(0xFF8B5CF6)
+                                                  : AppColors.blue)
+                                              .withValues(
+                                                alpha: (1.0 - v) * 0.5,
+                                              ),
                                       width: 2,
                                     ),
                                   ),
@@ -400,7 +431,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                                 color: AppColors.cardBackgroundLight,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.gold.withValues(alpha: 0.3),
+                                    color: AppColors.gold.withValues(
+                                      alpha: 0.3,
+                                    ),
                                     blurRadius: 20,
                                     spreadRadius: 2,
                                   ),
@@ -449,7 +482,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                       ),
                     ],
 
-                    const Spacer(),
+                    const SizedBox(height: 24),
                     const SizedBox(height: 16),
 
                     if (!_isSearching)
@@ -459,7 +492,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                           backgroundColor: _playerCount == 6
                               ? const Color(0xFF8B5CF6)
                               : AppColors.gold,
-                          foregroundColor: _playerCount == 6 ? Colors.white : Colors.black,
+                          foregroundColor: _playerCount == 6
+                              ? Colors.white
+                              : Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -472,7 +507,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                _playerCount == 6 ? Icons.hexagon : Icons.flash_on,
+                                _playerCount == 6
+                                    ? Icons.hexagon
+                                    : Icons.flash_on,
                                 size: 24,
                               ),
                               const SizedBox(width: 8),
@@ -493,7 +530,10 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                         onPressed: _stopSearching,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.red,
-                          side: const BorderSide(color: AppColors.red, width: 2),
+                          side: const BorderSide(
+                            color: AppColors.red,
+                            width: 2,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -501,7 +541,10 @@ class _MatchmakingScreenState extends State<MatchmakingScreen>
                         ),
                         child: const Text(
                           'CANCEL SEARCH',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                   ],

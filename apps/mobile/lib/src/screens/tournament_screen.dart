@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_client.dart';
 import 'online_game_screen.dart';
 import '../theme/app_colors.dart';
@@ -93,7 +94,10 @@ class _TournamentScreenState extends State<TournamentScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Join ${tournament.title}?',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -112,7 +116,11 @@ class _TournamentScreenState extends State<TournamentScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.emoji_events, color: AppColors.gold, size: 24),
+                  const Icon(
+                    Icons.emoji_events,
+                    color: AppColors.gold,
+                    size: 24,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -138,10 +146,15 @@ class _TournamentScreenState extends State<TournamentScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.gold,
               foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('JOIN NOW', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'JOIN NOW',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -184,9 +197,11 @@ class _TournamentScreenState extends State<TournamentScreen> {
           children: [
             Icon(Icons.emoji_events, color: AppColors.gold),
             SizedBox(width: 8),
-            Text(
-              'Tournaments',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Flexible(
+              child: Text(
+                'Tournaments',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ),
           ],
         ),
@@ -198,10 +213,12 @@ class _TournamentScreenState extends State<TournamentScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            )
           : _errorMessage != null
-              ? _buildErrorView()
-              : _buildContent(),
+          ? _buildErrorView()
+          : _buildContent(),
     );
   }
 
@@ -325,7 +342,10 @@ class _TournamentScreenState extends State<TournamentScreen> {
           const SizedBox(height: 6),
           Text(
             t.description,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -420,9 +440,14 @@ class _TournamentScreenState extends State<TournamentScreen> {
               children: [
                 Icon(icon, size: 14, color: color),
                 const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 10,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -444,23 +469,28 @@ class _TournamentScreenState extends State<TournamentScreen> {
 
   Widget _buildActionButton(TournamentModel t) {
     if (t.isJoined) {
-      final playable = _selectedDetail?.matches.where(
-        (match) => match.status == 'IN_PROGRESS' &&
-            match.matchId != null &&
-            match.participantIds.contains(_currentUserId),
-      ).firstOrNull;
+      final playable = _selectedDetail?.matches
+          .where(
+            (match) =>
+                match.status == 'IN_PROGRESS' &&
+                match.matchId != null &&
+                match.participantIds.contains(_currentUserId),
+          )
+          .firstOrNull;
       if (playable != null && _apiClient.accessToken != null) {
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () async {
-              await Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) => OnlineGameScreen(
-                  matchId: playable.matchId!,
-                  token: _apiClient.accessToken!,
-                  apiClient: _apiClient,
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => OnlineGameScreen(
+                    matchId: playable.matchId!,
+                    token: _apiClient.accessToken!,
+                    apiClient: _apiClient,
+                  ),
                 ),
-              ));
+              );
               if (mounted) await _loadTournaments();
             },
             icon: const Icon(Icons.play_arrow),
@@ -506,7 +536,10 @@ class _TournamentScreenState extends State<TournamentScreen> {
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.black,
+                  ),
                 )
               : const Icon(Icons.add_circle, color: Colors.black, size: 18),
           label: Text(
@@ -520,7 +553,9 @@ class _TournamentScreenState extends State<TournamentScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.gold,
             padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       );
@@ -531,9 +566,15 @@ class _TournamentScreenState extends State<TournamentScreen> {
 
   Widget _buildVisualBracket(TournamentDetailModel detail) {
     final participantsMap = {for (var p in detail.participants) p.userId: p};
-    final semi1 = detail.matches.where((m) => m.roundNumber == 1 && m.matchIndex == 0).firstOrNull;
-    final semi2 = detail.matches.where((m) => m.roundNumber == 1 && m.matchIndex == 1).firstOrNull;
-    final finalMatch = detail.matches.where((m) => m.roundNumber == 2).firstOrNull;
+    final semi1 = detail.matches
+        .where((m) => m.roundNumber == 1 && m.matchIndex == 0)
+        .firstOrNull;
+    final semi2 = detail.matches
+        .where((m) => m.roundNumber == 1 && m.matchIndex == 1)
+        .firstOrNull;
+    final finalMatch = detail.matches
+        .where((m) => m.roundNumber == 2)
+        .firstOrNull;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,12 +647,14 @@ class _TournamentScreenState extends State<TournamentScreen> {
       children: [
         Container(width: 4, height: 16, color: AppColors.gold),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -641,8 +684,9 @@ class _TournamentScreenState extends State<TournamentScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
               Text(
                 title,
@@ -660,7 +704,10 @@ class _TournamentScreenState extends State<TournamentScreen> {
                 ),
                 child: Text(
                   tag,
-                  style: const TextStyle(color: AppColors.goldLight, fontSize: 10),
+                  style: const TextStyle(
+                    color: AppColors.goldLight,
+                    fontSize: 10,
+                  ),
                 ),
               ),
             ],
@@ -669,14 +716,20 @@ class _TournamentScreenState extends State<TournamentScreen> {
           // 4 Player Slots
           Row(
             children: List.generate(4, (index) {
-              final uid = index < participantIds.length ? participantIds[index] : null;
+              final uid = index < participantIds.length
+                  ? participantIds[index]
+                  : null;
               final participant = uid != null ? participantsMap[uid] : null;
-              final isWinner = match != null && uid != null && match.winnerIds.contains(uid);
+              final isWinner =
+                  match != null && uid != null && match.winnerIds.contains(uid);
 
               return Expanded(
                 child: Container(
                   margin: EdgeInsets.only(right: index < 3 ? 6 : 0),
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isWinner
                         ? AppColors.green.withValues(alpha: 0.15)
@@ -690,10 +743,14 @@ class _TournamentScreenState extends State<TournamentScreen> {
                     children: [
                       CircleAvatar(
                         radius: 14,
-                        backgroundColor: isWinner ? AppColors.gold : AppColors.surfaceElevated,
+                        backgroundColor: isWinner
+                            ? AppColors.gold
+                            : AppColors.surfaceElevated,
                         child: Text(
                           participant != null
-                              ? participant.displayName.substring(0, 1).toUpperCase()
+                              ? participant.displayName
+                                    .substring(0, 1)
+                                    .toUpperCase()
                               : '?',
                           style: TextStyle(
                             color: isWinner ? Colors.black : Colors.white70,
@@ -706,9 +763,13 @@ class _TournamentScreenState extends State<TournamentScreen> {
                       Text(
                         participant?.displayName ?? 'TBD',
                         style: TextStyle(
-                          color: isWinner ? AppColors.greenLight : Colors.white70,
+                          color: isWinner
+                              ? AppColors.greenLight
+                              : Colors.white70,
                           fontSize: 10,
-                          fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isWinner
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -734,7 +795,10 @@ class _TournamentScreenState extends State<TournamentScreen> {
             children: [
               Text(
                 'Status: $status',
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                ),
               ),
             ],
           ),

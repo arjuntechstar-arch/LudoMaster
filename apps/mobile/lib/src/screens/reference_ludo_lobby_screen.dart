@@ -239,16 +239,13 @@ class _ReferenceLudoLobbyScreenState
             child: SizedBox(
               width: width,
               height: scaledHeight,
-              child: Align(
+              child: FittedBox(
+                fit: BoxFit.contain,
                 alignment: Alignment.topCenter,
-                child: Transform.scale(
-                  alignment: Alignment.topCenter,
-                  scale: scale,
-                  child: SizedBox(
-                    width: _designWidth,
-                    height: _designHeight,
-                    child: _buildDesignCanvas(),
-                  ),
+                child: SizedBox(
+                  width: _designWidth,
+                  height: _designHeight,
+                  child: _buildDesignCanvas(),
                 ),
               ),
             ),

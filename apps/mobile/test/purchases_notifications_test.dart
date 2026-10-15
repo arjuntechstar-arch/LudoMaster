@@ -259,9 +259,9 @@ void main() {
     expect(mockClient.markReadCalled, isTrue);
     expect(refreshHomeCalled, isTrue);
 
-    // Tap "MARK ALL AS READ"
-    expect(find.text('MARK ALL AS READ'), findsOneWidget);
-    await tester.tap(find.text('MARK ALL AS READ'));
+    // The compact action keeps its accessible label on narrow dialogs.
+    expect(find.byTooltip('Mark all as read'), findsOneWidget);
+    await tester.tap(find.byTooltip('Mark all as read'));
     await tester.pumpAndSettle();
 
     expect(mockClient.markAllReadCalled, isTrue);

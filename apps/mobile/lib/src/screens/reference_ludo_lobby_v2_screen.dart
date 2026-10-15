@@ -6,8 +6,8 @@ import 'reference_ludo_lobby_screen.dart';
 ///
 /// The original lobby owns all game interactions and visual details on a
 /// 706x1600 logical canvas. This wrapper gives it those exact constraints and
-/// then scales the complete canvas using both available dimensions, preventing
-/// the desktop/web layout from being enlarged by width and cropped vertically.
+/// scales to a bounded width. Short windows scroll instead of shrinking every
+/// control until it is too small to read or tap.
 class ReferenceLudoLobbyV2Screen extends StatelessWidget {
   const ReferenceLudoLobbyV2Screen({super.key});
 
@@ -23,22 +23,29 @@ class ReferenceLudoLobbyV2Screen extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return Center(
-              child: FittedBox(
-                fit: BoxFit.contain,
-                alignment: Alignment.center,
+            final width = constraints.maxWidth.clamp(0.0, 560.0);
+            return SingleChildScrollView(
+              child: Center(
                 child: SizedBox(
-                  width: _designWidth,
-                  height: _designHeight,
-                  child: MediaQuery(
-                    // The reference canvas uses fixed pixel-proportioned boxes.
-                    // Normalize text within that canvas so accessibility/browser
-                    // scaling cannot make labels overflow their fixed artwork.
-                    data: mediaQuery.copyWith(
-                      size: const Size(_designWidth, _designHeight),
-                      textScaler: const TextScaler.linear(0.82),
+                  width: width,
+                  height: width * _designHeight / _designWidth,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                    child: SizedBox(
+                      width: _designWidth,
+                      height: _designHeight,
+                      child: MediaQuery(
+                        // The reference canvas uses fixed pixel-proportioned boxes.
+                        // Normalize text within that canvas so accessibility/browser
+                        // scaling cannot make labels overflow their fixed artwork.
+                        data: mediaQuery.copyWith(
+                          size: const Size(_designWidth, _designHeight),
+                          textScaler: const TextScaler.linear(0.82),
+                        ),
+                        child: const ReferenceLudoLobbyScreen(),
+                      ),
                     ),
-                    child: const ReferenceLudoLobbyScreen(),
                   ),
                 ),
               ),

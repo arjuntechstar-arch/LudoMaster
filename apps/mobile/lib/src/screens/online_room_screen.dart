@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/api_client.dart';
+import '../theme/app_colors.dart';
 import '../widgets/voice_chat_controller_widget.dart';
 import 'friends_screen.dart';
 import 'online_game_screen.dart';
@@ -176,7 +177,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -202,14 +203,13 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
     return CustomScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
-        SliverFillRemaining(
-          hasScrollBody: false,
+        SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.all(padding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Spacer(),
+                const SizedBox(height: 16),
                 Icon(
                   Icons.groups_rounded,
                   size: compact ? 64 : 80,
@@ -261,13 +261,13 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   initialValue: _maxPlayers,
-                  dropdownColor: const Color(0xFF1E293B),
+                  dropdownColor: AppColors.surfaceCard,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Player seats',
                     labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
                     filled: true,
-                    fillColor: const Color(0xFF1E293B),
+                    fillColor: AppColors.surfaceCard,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -283,7 +283,9 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                   onChanged: _isLoading
                       ? null
                       : (count) {
-                          if (count != null) setState(() => _maxPlayers = count);
+                          if (count != null) {
+                            setState(() => _maxPlayers = count);
+                          }
                         },
                 ),
                 SwitchListTile(
@@ -299,7 +301,10 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                     _fillWithBots
                         ? 'Start with at least 2 people; bots fill open seats.'
                         : 'Wait until every seat is filled by a friend.',
-                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 12,
+                    ),
                   ),
                   value: _fillWithBots,
                   activeTrackColor: const Color(0xFF38BDF8),
@@ -354,7 +359,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -367,7 +372,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.surfaceCard,
         title: const Text(
           'Enter Room Code',
           style: TextStyle(color: Colors.white),
@@ -461,7 +466,10 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                     children: [
                       const Text(
                         'ROOM CODE',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       FittedBox(
@@ -542,7 +550,10 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                   icon: const Icon(Icons.person_add, size: 18),
                   label: const FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Invite Friends', style: TextStyle(fontSize: 13)),
+                    child: Text(
+                      'Invite Friends',
+                      style: TextStyle(fontSize: 13),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
@@ -600,9 +611,12 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                 final seatColor = colors[index % colors.length];
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.surfaceCard,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isOccupied
@@ -640,7 +654,9 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: isOccupied ? Colors.white : Colors.white38,
+                                color: isOccupied
+                                    ? Colors.white
+                                    : Colors.white38,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
@@ -654,7 +670,9 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                                   Text(
                                     member.isHost
                                         ? 'Host'
-                                        : (member.isReady ? 'Ready' : 'Not Ready'),
+                                        : (member.isReady
+                                              ? 'Ready'
+                                              : 'Not Ready'),
                                     style: TextStyle(
                                       color: member.isReady
                                           ? const Color(0xFF22C55E)
@@ -719,7 +737,8 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                       ? 'STARTING…'
                       : room.members.length < 2
                       ? 'WAITING FOR PLAYER'
-                      : !room.fillWithBots && room.members.length < room.maxPlayers
+                      : !room.fillWithBots &&
+                            room.members.length < room.maxPlayers
                       ? 'WAITING FOR ${room.maxPlayers - room.members.length} MORE'
                       : canStartMatch
                       ? 'START MATCH'
