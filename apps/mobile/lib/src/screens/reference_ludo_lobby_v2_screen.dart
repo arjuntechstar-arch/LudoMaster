@@ -16,6 +16,8 @@ class ReferenceLudoLobbyV2Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D1733),
       body: SafeArea(
@@ -25,10 +27,19 @@ class ReferenceLudoLobbyV2Screen extends StatelessWidget {
               child: FittedBox(
                 fit: BoxFit.contain,
                 alignment: Alignment.center,
-                child: const SizedBox(
+                child: SizedBox(
                   width: _designWidth,
                   height: _designHeight,
-                  child: ReferenceLudoLobbyScreen(),
+                  child: MediaQuery(
+                    // The reference canvas uses fixed pixel-proportioned boxes.
+                    // Normalize text within that canvas so accessibility/browser
+                    // scaling cannot make labels overflow their fixed artwork.
+                    data: mediaQuery.copyWith(
+                      size: const Size(_designWidth, _designHeight),
+                      textScaler: const TextScaler.linear(0.82),
+                    ),
+                    child: const ReferenceLudoLobbyScreen(),
+                  ),
                 ),
               ),
             );
