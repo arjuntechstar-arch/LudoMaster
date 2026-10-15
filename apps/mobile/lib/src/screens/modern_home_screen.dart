@@ -656,57 +656,76 @@ class _TopBar extends StatelessWidget {
   final VoidCallback onWalletTap;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(18, 12, 14, 10),
-        child: Row(
-          children: [
-            const AppLogo(size: 38),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'LUDOMASTER',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                    ),
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 380;
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 12 : 18,
+              12,
+              compact ? 10 : 14,
+              10,
+            ),
+            child: Row(
+              children: [
+                AppLogo(size: compact ? 32 : 38),
+                SizedBox(width: compact ? 6 : 10),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'LUDOMASTER',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      if (!compact)
+                        const Text(
+                          'Play. Progress. Connect.',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                    ],
                   ),
-                  Text(
-                    'Play. Progress. Connect.',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
-                    ),
+                ),
+                const SizedBox(width: 4),
+                _WalletPill(
+                  icon: Icons.monetization_on_rounded,
+                  value: account?.wallet.coins ?? 1000,
+                  color: AppColors.gold,
+                  onTap: onWalletTap,
+                  compact: compact,
+                ),
+                SizedBox(width: compact ? 2 : 6),
+                _RoundIconButton(
+                  icon: Icons.notifications_none_rounded,
+                  badge: unreadNotifications,
+                  onTap: onNotificationsTap,
+                  compact: compact,
+                ),
+                SizedBox(width: compact ? 2 : 6),
+                GestureDetector(
+                  onTap: onProfileTap,
+                  child: ProfileAvatar(
+                    avatarId: account?.profile.avatarId ?? 'avatar_0',
+                    radius: compact ? 16 : 18,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            _WalletPill(
-              icon: Icons.monetization_on_rounded,
-              value: account?.wallet.coins ?? 1000,
-              color: AppColors.gold,
-              onTap: onWalletTap,
-            ),
-            const SizedBox(width: 6),
-            _RoundIconButton(
-              icon: Icons.notifications_none_rounded,
-              badge: unreadNotifications,
-              onTap: onNotificationsTap,
-            ),
-            const SizedBox(width: 6),
-            GestureDetector(
-              onTap: onProfileTap,
-              child: ProfileAvatar(
-                avatarId: account?.profile.avatarId ?? 'avatar_0',
-                radius: 18,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       );
 }
 
@@ -716,33 +735,40 @@ class _WalletPill extends StatelessWidget {
     required this.value,
     required this.color,
     required this.onTap,
+    this.compact = false,
   });
 
   final IconData icon;
   final int value;
   final Color color;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) => InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 6 : 9,
+            vertical: compact ? 6 : 7,
+          ),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: color.withValues(alpha: 0.24)),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 15),
-              const SizedBox(width: 4),
+              Icon(icon, color: color, size: compact ? 14 : 15),
+              SizedBox(width: compact ? 3 : 4),
               Text(
                 value > 9999 ? '${(value / 1000).toStringAsFixed(1)}k' : '$value',
+                maxLines: 1,
                 style: TextStyle(
                   color: color,
-                  fontSize: 12,
+                  fontSize: compact ? 11 : 12,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -753,11 +779,17 @@ class _WalletPill extends StatelessWidget {
 }
 
 class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({required this.icon, required this.badge, required this.onTap});
+  const _RoundIconButton({
+    required this.icon,
+    required this.badge,
+    required this.onTap,
+    this.compact = false,
+  });
 
   final IconData icon;
   final int badge;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) => Badge(
@@ -765,7 +797,12 @@ class _RoundIconButton extends StatelessWidget {
         label: Text('$badge'),
         child: IconButton.filledTonal(
           onPressed: onTap,
-          icon: Icon(icon, size: 20),
+          icon: Icon(icon, size: compact ? 18 : 20),
+          constraints: BoxConstraints.tightFor(
+            width: compact ? 40 : 48,
+            height: compact ? 40 : 48,
+          ),
+          padding: EdgeInsets.zero,
           style: IconButton.styleFrom(
             backgroundColor: AppColors.surfaceCard,
             foregroundColor: AppColors.textPrimary,
@@ -781,7 +818,12 @@ class _TabScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-        padding: const EdgeInsets.fromLTRB(18, 10, 18, 30),
+        padding: EdgeInsets.fromLTRB(
+          MediaQuery.sizeOf(context).width < 360 ? 14 : 18,
+          10,
+          MediaQuery.sizeOf(context).width < 360 ? 14 : 18,
+          30,
+        ),
         children: children,
       );
 }
