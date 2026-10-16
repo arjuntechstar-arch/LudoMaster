@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:game_engine/game_engine.dart';
 
-/// Curated, premium color palette for LudoMaster.
+/// Royal blue and gold palette inspired by the supplied game references.
 class AppColors {
   const AppColors._();
 
-  // Background & surfaces - modern deep navy with softer contrast.
-  static const Color background = Color(0xFF08111F);
-  static const Color surface = Color(0xFF101C2E);
-  static const Color surfaceCard = Color(0xFF16243A);
-  static const Color surfaceElevated = Color(0xFF203451);
+  // Royal blue backgrounds and glossy panel surfaces.
+  static const Color background = Color(0xFF0B2247);
+  static const Color surface = Color(0xFF10488E);
+  static const Color surfaceCard = Color(0xFF1765B7);
+  static const Color surfaceElevated = Color(0xFF2588D8);
 
-  // Product accents. Violet is the primary interaction color, while mint/cyan
-  // are used for success and social actions. Gold remains the reward/economy
-  // accent so existing game screens retain their familiar visual language.
-  static const Color primary = Color(0xFF7C5CFC);
-  static const Color primaryLight = Color(0xFFA995FF);
-  static const Color primaryDark = Color(0xFF5136D9);
-  static const Color mint = Color(0xFF38D9A9);
+  // Gold highlights primary actions; green and cyan identify rewards and gems.
+  static const Color primary = Color(0xFFFFC928);
+  static const Color primaryLight = Color(0xFFFFE680);
+  static const Color primaryDark = Color(0xFFD58A08);
+  static const Color mint = Color(0xFF8FE33E);
   static const Color coral = Color(0xFFFF6B81);
 
   // Accents & Metallics - Luminous Cyber Gold & Cyan
@@ -65,8 +63,8 @@ class AppColors {
 
   // Text
   static const Color textPrimary = Color(0xFFF7F9FC);
-  static const Color textSecondary = Color(0xFFA8B5C9);
-  static const Color textMuted = Color(0xFF73829B);
+  static const Color textSecondary = Color(0xFFD5E9FF);
+  static const Color textMuted = Color(0xFFA9CCF2);
 
   static Color getPlayerColor(PlayerColor color) {
     switch (color) {

@@ -5,6 +5,8 @@ import '../services/cosmetic_selection.dart';
 import '../services/billing_service.dart';
 import '../widgets/auth_dialog.dart';
 import '../theme/app_colors.dart';
+import '../widgets/royal_ui.dart';
+import '../widgets/game_symbol.dart';
 
 /// Screen offering the Cosmetic Shop and Player Inventory (Boards, Dice, Frames).
 class StoreInventoryScreen extends StatefulWidget {
@@ -215,7 +217,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
                       shape: BoxShape.circle,
                       border: Border.all(color: rarityColor, width: 2),
                     ),
-                    child: Icon(
+                    child: GameSymbol(
                       _getCategoryIcon(item.category),
                       color: rarityColor,
                       size: 32,
@@ -286,7 +288,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        icon: const Icon(Icons.monetization_on, size: 20),
+                        icon: const GameSymbol(Icons.monetization_on, size: 20),
                         label: Text(
                           '${item.priceCoins} Coins',
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -307,7 +309,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        icon: const Icon(Icons.diamond, size: 20),
+                        icon: const GameSymbol(Icons.diamond, size: 20),
                         label: Text(
                           '${item.priceGems} Gems',
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -323,7 +325,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
               const SizedBox(height: 12),
               if (cashProduct != null)
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.payment),
+                  icon: const GameSymbol(Icons.payment),
                   label: Text(
                     _billing.priceFor(cashProduct.id) == null
                         ? 'Money purchase unavailable'
@@ -387,104 +389,109 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
           labelColor: AppColors.gold,
           unselectedLabelColor: AppColors.textSecondary,
           tabs: const [
-            Tab(icon: Icon(Icons.storefront), text: 'Shop'),
-            Tab(icon: Icon(Icons.shopping_bag), text: 'Coins & Gems'),
-            Tab(icon: Icon(Icons.inventory_2), text: 'My Inventory'),
+            Tab(icon: GameSymbol(Icons.storefront), text: 'Shop'),
+            Tab(icon: GameSymbol(Icons.shopping_bag), text: 'Coins & Gems'),
+            Tab(icon: GameSymbol(Icons.inventory_2), text: 'My Inventory'),
           ],
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Balance Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              color: AppColors.surface,
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  const Text(
-                    'Your Balance',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  _buildBalanceChip(
-                    icon: Icons.monetization_on,
-                    amount: _userCoins,
-                    color: AppColors.gold,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildBalanceChip(
-                    icon: Icons.diamond,
-                    amount: _userGems,
-                    color: const Color(0xFF06B6D4),
-                  ),
-                ],
-              ),
-            ),
-
-            // Category Filter Chips (only for Cosmetics & Inventory)
-            if (_tabController.index != 1)
+      body: RoyalBackdrop(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top Balance Bar
               Container(
                 padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 16,
+                  horizontal: 20,
+                  vertical: 10,
                 ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildCategoryFilterChip('ALL', 'All Items'),
-                      const SizedBox(width: 8),
-                      _buildCategoryFilterChip('BOARD_THEME', 'Boards'),
-                      const SizedBox(width: 8),
-                      _buildCategoryFilterChip('DICE_SKIN', 'Dice Skins'),
-                      const SizedBox(width: 8),
-                      _buildCategoryFilterChip('FRAME', 'Frames'),
-                    ],
-                  ),
+                color: AppColors.surface,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Text(
+                      'Your Balance',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    _buildBalanceChip(
+                      icon: Icons.monetization_on,
+                      amount: _userCoins,
+                      color: AppColors.gold,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildBalanceChip(
+                      icon: Icons.diamond,
+                      amount: _userGems,
+                      color: const Color(0xFF06B6D4),
+                    ),
+                  ],
                 ),
               ),
 
-            // Main Body: Tab Views
-            Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.gold),
-                    )
-                  : _errorMessage != null
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _errorMessage!,
-                            style: const TextStyle(color: Colors.redAccent),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: _loadData,
-                            child: const Text('RETRY'),
-                          ),
-                        ],
-                      ),
-                    )
-                  : TabBarView(
-                      controller: _tabController,
+              // Category Filter Chips (only for Cosmetics & Inventory)
+              if (_tabController.index != 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
                       children: [
-                        _buildShopGrid(),
-                        _buildIapStoreGrid(),
-                        _buildInventoryGrid(),
+                        _buildCategoryFilterChip('ALL', 'All Items'),
+                        const SizedBox(width: 8),
+                        _buildCategoryFilterChip('BOARD_THEME', 'Boards'),
+                        const SizedBox(width: 8),
+                        _buildCategoryFilterChip('DICE_SKIN', 'Dice Skins'),
+                        const SizedBox(width: 8),
+                        _buildCategoryFilterChip('FRAME', 'Frames'),
                       ],
                     ),
-            ),
-          ],
+                  ),
+                ),
+
+              // Main Body: Tab Views
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: AppColors.gold),
+                      )
+                    : _errorMessage != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.redAccent),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _loadData,
+                              child: const Text('RETRY'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildShopGrid(),
+                          _buildIapStoreGrid(),
+                          _buildInventoryGrid(),
+                        ],
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -505,7 +512,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 16),
+          GameSymbol(icon, color: color, size: 20),
           const SizedBox(width: 6),
           Text(
             amount.toString(),
@@ -717,8 +724,19 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isBundle
+                ? const Color(0xFF56346D)
+                : isGemProduct
+                ? const Color(0xFF135164)
+                : const Color(0xFF65451D),
+            const Color(0xFF101E37),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(isBundle ? 24 : 12),
         border: Border.all(
           color: themeColor.withValues(alpha: 0.4),
           width: 1.2,
@@ -765,7 +783,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
                   color: themeColor.withValues(alpha: 0.1),
                   border: Border.all(color: themeColor.withValues(alpha: 0.3)),
                 ),
-                child: Icon(
+                child: GameSymbol(
                   isCosmetic
                       ? Icons.auto_awesome
                       : isBundle
@@ -893,11 +911,27 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
     required bool isShop,
   }) {
     final rarityColor = _getRarityColor(item.rarity);
+    final categoryTone = switch (item.category) {
+      'DICE_SKIN' => const Color(0xFF3F356C),
+      'BOARD_THEME' => const Color(0xFF164E50),
+      'FRAME' => const Color(0xFF684224),
+      _ => const Color(0xFF23466C),
+    };
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [categoryTone, const Color(0xFF0C1C35)],
+        ),
+        borderRadius: BorderRadius.circular(
+          item.category == 'FRAME'
+              ? 24
+              : item.category == 'BOARD_THEME'
+              ? 10
+              : 18,
+        ),
         border: Border.all(
           color: item.isEquipped
               ? AppColors.green
@@ -983,7 +1017,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
                   color: rarityColor.withValues(alpha: 0.1),
                   border: Border.all(color: rarityColor.withValues(alpha: 0.3)),
                 ),
-                child: Icon(
+                child: GameSymbol(
                   _getCategoryIcon(item.category),
                   color: rarityColor,
                   size: 34,
@@ -1091,7 +1125,7 @@ class _StoreInventoryScreenState extends State<StoreInventoryScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            GameSymbol(
               hasGems && !hasCoins ? Icons.diamond : Icons.monetization_on,
               size: 14,
             ),

@@ -73,6 +73,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/icons/fluent_3d/
     - assets/audio/
     - assets/branding/ludo_play_logo.png
     - assets/legal/privacy_policy.json

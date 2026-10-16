@@ -90,7 +90,13 @@ class GameCardSurface extends StatefulWidget {
     required this.child,
     required this.color,
     required this.onTap,
+    this.surfaceColor,
+    this.radius = 22,
+    this.pattern = 0,
   });
+  final Color? surfaceColor;
+  final double radius;
+  final int pattern;
   final Widget child;
   final Color color;
   final VoidCallback onTap;
@@ -110,18 +116,37 @@ class _GameCardSurfaceState extends State<GameCardSurface> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedScale(
-        scale: _pressed ? .975 : (_hovered ? 1.012 : 1),
+        scale: _pressed ? .99 : (_hovered ? 1.012 : 1),
         duration: duration,
         curve: Curves.easeOutCubic,
         child: AnimatedContainer(
           duration: duration,
+          margin: const EdgeInsets.only(bottom: 10),
+          transform: Matrix4.translationValues(
+            0,
+            _pressed ? 5 : (_hovered ? -3 : 0),
+            0,
+          ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(widget.radius),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withValues(alpha: _hovered ? .2 : .07),
-                blurRadius: _hovered ? 24 : 14,
-                offset: const Offset(0, 5),
+                color: Colors.black.withValues(alpha: .5),
+                blurRadius: 16,
+                offset: const Offset(0, 14),
+              ),
+              BoxShadow(
+                color: Color.lerp(
+                  widget.surfaceColor ?? widget.color,
+                  const Color(0xFF02091B),
+                  .65,
+                )!,
+                offset: Offset(0, _pressed ? 3 : 9),
+              ),
+              BoxShadow(
+                color: widget.color.withValues(alpha: _hovered ? .22 : .08),
+                blurRadius: 20,
+                spreadRadius: 1,
               ),
             ],
           ),
@@ -129,9 +154,9 @@ class _GameCardSurfaceState extends State<GameCardSurface> {
             clipBehavior: Clip.antiAlias,
             color: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(widget.radius),
               side: BorderSide(
-                color: widget.color.withValues(alpha: _hovered ? .65 : .25),
+                color: widget.color.withValues(alpha: _hovered ? 1 : .8),
               ),
             ),
             child: Ink(
@@ -141,10 +166,14 @@ class _GameCardSurfaceState extends State<GameCardSurface> {
                   end: Alignment.bottomRight,
                   colors: [
                     Color.alphaBlend(
-                      widget.color.withValues(alpha: .12),
-                      const Color(0xFF19263D),
+                      widget.color.withValues(alpha: .22),
+                      widget.surfaceColor ?? const Color(0xFF164277),
                     ),
-                    const Color(0xFF101C2E),
+                    Color.lerp(
+                      widget.surfaceColor ?? const Color(0xFF164277),
+                      const Color(0xFF07182F),
+                      .42,
+                    )!,
                   ],
                 ),
               ),
@@ -153,7 +182,8 @@ class _GameCardSurfaceState extends State<GameCardSurface> {
                 onHighlightChanged: (value) => setState(() => _pressed = value),
                 splashColor: widget.color.withValues(alpha: .15),
                 child: CustomPaint(
-                  painter: GameCardPattern(widget.color),
+                  painter: GameCardPattern(widget.color, widget.pattern),
+                  foregroundPainter: _CardBevel(widget.radius),
                   child: widget.child,
                 ),
               ),
@@ -167,12 +197,47 @@ class _GameCardSurfaceState extends State<GameCardSurface> {
 
 /// Board tracks, orbit rings and a die give each card a game-table texture.
 class GameCardPattern extends CustomPainter {
-  const GameCardPattern(this.color);
+  const GameCardPattern(this.color, [this.pattern = 0]);
+  final int pattern;
   final Color color;
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
+    if (pattern != 0) {
+      final detail = Paint()
+        ..color = color.withValues(alpha: .10)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke;
+      if (pattern.isEven) {
+        for (
+          double x = size.width * .5;
+          x < size.width + size.height;
+          x += 16
+        ) {
+          canvas.drawLine(
+            Offset(x, 0),
+            Offset(x - size.height, size.height),
+            detail,
+          );
+        }
+      } else {
+        for (var i = 0; i < 3; i++) {
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromLTWH(
+                size.width * .62 + i * 10,
+                -25 + i * 10,
+                size.width * .6,
+                size.height + 30,
+              ),
+              const Radius.circular(20),
+            ),
+            detail,
+          );
+        }
+      }
+    }
     final stroke = Paint()
       ..color = color.withValues(alpha: .13)
       ..style = PaintingStyle.stroke
@@ -242,5 +307,59 @@ class GameCardPattern extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant GameCardPattern oldDelegate) =>
-      oldDelegate.color != color;
+      oldDelegate.color != color || oldDelegate.pattern != pattern;
+}
+
+/// Raised rim, top reflection and lower bevel create thickness even at rest.
+class _CardBevel extends CustomPainter {
+  const _CardBevel(this.radius);
+  final double radius;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rim = RRect.fromRectAndRadius(
+      (Offset.zero & size).deflate(2),
+      Radius.circular(radius - 2),
+    );
+    canvas.save();
+    canvas.clipRRect(rim);
+    canvas.drawRRect(
+      rim,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xBBFFFFFF),
+            Color(0x22FFFFFF),
+            Color(0x08000000),
+            Color(0x9900051A),
+          ],
+          stops: [0, .14, .55, 1],
+        ).createShader(Offset.zero & size)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5,
+    );
+    final shine = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width * .9, 0)
+      ..lineTo(size.width * .5, size.height * .32)
+      ..lineTo(0, size.height * .2)
+      ..close();
+    canvas.drawPath(
+      shine,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: .14),
+            Colors.white.withValues(alpha: 0),
+          ],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CardBevel old) => radius != old.radius;
 }

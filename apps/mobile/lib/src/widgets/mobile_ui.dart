@@ -93,6 +93,20 @@ class MobileAction extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 12),
     child: GameCardSurface(
       color: color,
+      surfaceColor: icon == Icons.emoji_events_outlined
+          ? const Color(0xFF592C47)
+          : icon == Icons.workspace_premium_outlined
+          ? const Color(0xFF352B68)
+          : Color.alphaBlend(
+              color.withValues(alpha: .28),
+              const Color(0xFF112039),
+            ),
+      radius: icon == Icons.emoji_events_outlined
+          ? 12
+          : icon == Icons.workspace_premium_outlined
+          ? 28
+          : 18,
+      pattern: icon == Icons.emoji_events_outlined ? 2 : 1,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(16),

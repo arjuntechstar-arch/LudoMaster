@@ -31,7 +31,9 @@ class PlayerPanelWidget extends StatelessWidget {
     final panel = SizedBox(
       width: compact ? 124 : 140,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 250),
         padding: EdgeInsets.symmetric(
           horizontal: compact ? 6 : 10,
           vertical: compact ? 6 : 8,
@@ -42,11 +44,13 @@ class PlayerPanelWidget extends StatelessWidget {
                   color.withValues(alpha: 0.16),
                   AppColors.surfaceElevated,
                 )
-              : AppColors.surfaceCard,
+              : const Color(0xFF132640),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActiveTurn ? color : color.withValues(alpha: 0.4),
-            width: isActiveTurn ? 2.5 : 1.0,
+            color: isActiveTurn
+                ? AppColors.goldLight
+                : color.withValues(alpha: 0.3),
+            width: isActiveTurn ? 3.0 : 1.0,
           ),
           boxShadow: isActiveTurn
               ? [
@@ -80,13 +84,43 @@ class PlayerPanelWidget extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: isActiveTurn ? color : AppColors.textPrimary,
+                      color: isActiveTurn
+                          ? Colors.white
+                          : AppColors.textSecondary,
                       fontSize: compact ? 10 : 13,
                       fontWeight: isActiveTurn
                           ? FontWeight.bold
                           : FontWeight.w500,
                     ),
                   ),
+                  if (isActiveTurn && MediaQuery.sizeOf(context).height >= 500)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.play_arrow_rounded,
+                              size: compact ? 9 : 11,
+                              color: AppColors.goldLight,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              'CURRENT TURN',
+                              style: TextStyle(
+                                color: AppColors.goldLight,
+                                fontSize: compact ? 7 : 8,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   SizedBox(height: compact ? 1 : 2),
                   Wrap(
                     spacing: 2,
@@ -162,13 +196,18 @@ class PlayerPanelWidget extends StatelessWidget {
       ),
     );
 
+    final focusedPanel = Semantics(
+      selected: isActiveTurn,
+      label: isActiveTurn ? '${player.name}, current turn' : player.name,
+      child: panel,
+    );
     if (onTap != null) {
       return GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: panel,
+        child: focusedPanel,
       );
     }
-    return panel;
+    return focusedPanel;
   }
 }

@@ -157,7 +157,7 @@ void main() {
     expect(find.byKey(const ValueKey('moving-token')), findsOneWidget);
   });
 
-  testWidgets('opponent roll is shown without animating or enabling my die', (
+  testWidgets('opponent roll advances animation without enabling my die', (
     tester,
   ) async {
     final client = TestRealtimeClient();
@@ -176,12 +176,17 @@ void main() {
 
     expect(controller.currentState.isMyTurn, isFalse);
     expect(controller.currentState.isAnimating, isTrue);
-    expect(controller.currentState.rollSequence, 0);
+    expect(controller.currentState.rollSequence, 1);
     controller.rollDice();
     expect(client.rollRequests, 0);
 
     await tester.pump(GamePacing.diceRoll);
     expect(controller.currentState.isAnimating, isFalse);
+    client.emit('DICE_ROLLED', {'seatIndex': 1, 'value': 4});
+    await tester.pump();
+    expect(controller.currentState.rollSequence, 2);
+    expect(controller.currentState.isMyTurn, isFalse);
+    await tester.pump(GamePacing.diceRoll);
     controller.dispose();
   });
 

@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../widgets/game_symbol.dart';
+import '../widgets/royal_ui.dart';
+import '../widgets/event_showcase.dart';
+import '../widgets/arena_hero.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:game_engine/game_engine.dart';
@@ -12,7 +15,6 @@ import '../services/api_client.dart';
 import '../services/storage_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/mobile_ui.dart';
-import '../widgets/game_motion.dart';
 import 'settings_screen.dart';
 import '../widgets/auth_dialog.dart';
 import '../widgets/play_with_friends_dialog.dart';
@@ -253,7 +255,13 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
             ),
           ),
         ),
-        title: const Text('Ludo Play'),
+        title: const Text(
+          'LUDO PLAY',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
         centerTitle: false,
         actions: [
           IconButton(
@@ -278,33 +286,18 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(bottom: false, child: pages[_selectedIndex]),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: GameSymbol(Icons.home_outlined),
-            selectedIcon: GameSymbol(Icons.home_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: GameSymbol(Icons.sports_esports_outlined),
-            selectedIcon: GameSymbol(Icons.sports_esports_rounded),
-            label: 'Play',
-          ),
-          NavigationDestination(
-            icon: GameSymbol(Icons.auto_awesome_outlined),
-            selectedIcon: GameSymbol(Icons.auto_awesome_rounded),
-            label: 'Rewards',
-          ),
-          NavigationDestination(
-            icon: GameSymbol(Icons.people_outline_rounded),
-            selectedIcon: GameSymbol(Icons.people_rounded),
-            label: 'Social',
-          ),
-        ],
+      body: RoyalBackdrop(
+        child: SafeArea(bottom: false, child: pages[_selectedIndex]),
+      ),
+      bottomNavigationBar: RoyalNavigation(
+        selected: [0, 2, 1, 4][_selectedIndex],
+        onSelect: (index) {
+          if (index == 3) {
+            _openStore(initialTab: 2);
+            return;
+          }
+          setState(() => _selectedIndex = [0, 2, 1, 0, 3][index]);
+        },
       ),
     );
   }
@@ -312,35 +305,86 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
   Widget _home() => MobilePageBody(
     key: const ValueKey('home-tab'),
     children: [
-      MobileHeading(
-        'Ready to roll?',
-        eyebrow: 'YOUR NEXT GREAT GAME',
-        subtitle:
-            'Welcome back, ${_account?.profile.displayName ?? 'Player'}. Make your next move.',
-      ),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _balance(
-            Icons.monetization_on_outlined,
-            '${_account?.wallet.coins ?? 0} coins',
-            AppColors.gold,
-          ),
-          _balance(
             Icons.diamond_outlined,
-            '${_account?.wallet.gems ?? 0} gems',
+            '${_account?.wallet.gems ?? 0}',
             AppColors.cyan,
           ),
           _balance(
-            Icons.bolt_rounded,
-            'Level ${_account?.profile.level ?? 1}',
-            AppColors.mint,
+            Icons.monetization_on_outlined,
+            '${_account?.wallet.coins ?? 0}',
+            AppColors.gold,
           ),
         ],
       ),
-      const SizedBox(height: 22),
-      _hero(),
+      const SizedBox(height: 20),
+      ArenaHero(
+        onPlay: _playOnline,
+        name: _account?.profile.displayName ?? 'Player',
+      ),
+      const SizedBox(height: 24),
+      const MobileSection('Choose your kind of fun'),
+      Row(
+        children: [
+          Expanded(
+            child: RoyalMode(
+              label: 'Online',
+              icon: Icons.public_rounded,
+              onTap: _playOnline,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RoyalMode(
+              label: 'Team up',
+              icon: Icons.shield_rounded,
+              onTap: _openRoom,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RoyalMode(
+              label: 'Friends',
+              icon: Icons.favorite_rounded,
+              onTap: _playFriends,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Expanded(
+            child: RoyalMode(
+              key: const Key('mode-computer'),
+              label: 'Computer',
+              icon: Icons.smart_toy_rounded,
+              onTap: () => _local(true),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: RoyalMode(
+              key: const Key('mode-pass-play'),
+              label: 'Pass N Play',
+              icon: Icons.groups_rounded,
+              onTap: () => _local(false),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 20),
+      MobileAction(
+        title: 'TOURNAMENT',
+        subtitle: 'Play for the crown',
+        icon: Icons.emoji_events_outlined,
+        color: AppColors.gold,
+        onTap: () =>
+            _openAuthenticated((api) => TournamentScreen(apiClient: api)),
+      ),
       if (_savedGame != null) ...[
         const SizedBox(height: 16),
         MobileAction(
@@ -352,18 +396,8 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
           onTap: _resumeGame,
         ),
       ],
-      const MobileSection('Your table. Your rules.'),
-      _localModes(),
-      const MobileSection('A little more to play for'),
-      MobileAction(
-        title: 'Daily rewards',
-        subtitle: (_dailyReward?.canClaim ?? false)
-            ? 'Your next reward is ready to claim'
-            : 'Keep your streak going',
-        icon: Icons.card_giftcard_rounded,
-        color: AppColors.gold,
-        onTap: _daily,
-      ),
+      const MobileSection('Make today rewarding'),
+      RoyalRewardCard(ready: _dailyReward?.canClaim ?? false, onTap: _daily),
       MobileAction(
         title: 'Royal Arena',
         subtitle: 'Compete in the season and unlock rewards',
@@ -395,97 +429,6 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
           ),
         ],
       ),
-    ),
-  );
-
-  Widget _hero() => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF293766), Color(0xFF192841)],
-      ),
-      borderRadius: BorderRadius.circular(26),
-      border: Border.all(color: const Color(0xFF3B4C76)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 7,
-              height: 7,
-              decoration: const BoxDecoration(
-                color: AppColors.mint,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 7),
-            const Expanded(
-              child: Text(
-                'THE WORLD IS AT YOUR TABLE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: AppColors.mint,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your next\ngreat game.',
-                    style: TextStyle(
-                      fontSize: 25,
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
-                      letterSpacing: -.5,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Roll. Connect. Repeat.',
-                    style: TextStyle(
-                      color: Color(0xFFBECAE0),
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 104,
-              height: 100,
-              child: GameIconMotion(
-                floating: true,
-                child: CustomPaint(painter: _LobbyBoardPainter()),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: _playOnline,
-            icon: const GameSymbol(Icons.play_arrow_rounded),
-            label: const Text('Play online'),
-          ),
-        ),
-      ],
     ),
   );
 
@@ -570,67 +513,96 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
   Widget _rewards() => MobilePageBody(
     key: const ValueKey('rewards-tab'),
     children: [
-      const MobileHeading(
-        'Make every roll count',
-        eyebrow: 'YOUR PROGRESS',
-        subtitle:
-            'Small wins, bigger milestones, and something to come back for.',
+      const EventMarquee(),
+      EventBanner(
+        title: 'ROYAL\nARENA',
+        eyebrow: 'SEASON PASS',
+        description: 'Play your way to exclusive season rewards.',
+        asset: 'crown',
+        accent: const Color(0xFFFFD36D),
+        surface: const Color(0xFF54258B),
+        featured: true,
+        onTap: () => _openAuthenticated((api) => SeasonScreen(apiClient: api)),
       ),
-      MobileAction(
-        title: 'Daily rewards',
-        subtitle: 'Check in and keep your streak alive',
-        icon: Icons.card_giftcard_outlined,
-        color: AppColors.gold,
-        onTap: _daily,
-      ),
-      MobileAction(
-        title: 'Missions',
-        subtitle: 'Daily and weekly challenges',
-        icon: Icons.flag_outlined,
-        color: AppColors.mint,
+      EventBanner(
+        title: 'DAILY\nGOALS',
+        eyebrow: 'THE NEXT CHALLENGE',
+        description: 'Take on missions. Make every game count.',
+        asset: 'target',
+        reverse: true,
+        accent: const Color(0xFF6BEBF7),
+        surface: const Color(0xFF09526E),
+        action: 'EXPLORE',
         onTap: () =>
             _openAuthenticated((api) => MissionsScreen(apiClient: api)),
       ),
-      MobileAction(
-        title: 'Achievements',
-        subtitle: 'Celebrate your best moments',
-        icon: Icons.verified_outlined,
-        onTap: () =>
-            _openAuthenticated((api) => AchievementsScreen(apiClient: api)),
+      EventBanner(
+        title: 'DAILY\nBONUS',
+        eyebrow: (_dailyReward?.canClaim ?? false)
+            ? 'READY FOR YOU'
+            : 'KEEP THE STREAK',
+        description: 'A new reason to come back and roll.',
+        asset: 'gift',
+        accent: const Color(0xFFFFBD75),
+        surface: const Color(0xFF95401D),
+        action: (_dailyReward?.canClaim ?? false) ? 'CLAIM' : 'VIEW',
+        onTap: _daily,
       ),
-      MobileAction(
-        title: 'Season pass',
-        subtitle: 'Follow your path through Royal Arena',
-        icon: Icons.workspace_premium_outlined,
-        color: AppColors.coral,
-        onTap: () => _openAuthenticated((api) => SeasonScreen(apiClient: api)),
-      ),
-      MobileAction(
-        title: 'Leaderboard',
-        subtitle: 'See where you stand',
-        icon: Icons.leaderboard_outlined,
-        color: AppColors.cyan,
-        onTap: () =>
-            _openAuthenticated((api) => LeaderboardScreen(apiClient: api)),
-      ),
-      MobileAction(
-        title: 'Store & inventory',
-        subtitle: 'Give your next game a new look',
-        icon: Icons.storefront_outlined,
-        onTap: () => _openStore(),
-      ),
-      MobileAction(
-        title: 'Get more coins',
-        subtitle: 'Explore available reward options',
-        icon: Icons.monetization_on_outlined,
-        color: AppColors.gold,
-        onTap: () => showDialog<void>(
-          context: context,
-          builder: (_) => WatchAdRewardDialog(
-            apiClient: _apiClient,
-            onRewardClaimed: _loadAccount,
+      const MobileSection('More to play for'),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: EventShortcut(
+              title: 'Achievements',
+              asset: 'medal',
+              color: AppColors.gold,
+              onTap: () => _openAuthenticated(
+                (api) => AchievementsScreen(apiClient: api),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: EventShortcut(
+              title: 'Leaderboard',
+              asset: 'trophy',
+              color: AppColors.cyan,
+              onTap: () => _openAuthenticated(
+                (api) => LeaderboardScreen(apiClient: api),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: EventShortcut(
+              title: 'Store & inventory',
+              asset: 'bag',
+              color: AppColors.coral,
+              onTap: () => _openStore(),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: EventShortcut(
+              title: 'Coin rewards',
+              asset: 'coin',
+              color: AppColors.mint,
+              onTap: () => showDialog<void>(
+                context: context,
+                builder: (_) => WatchAdRewardDialog(
+                  apiClient: _apiClient,
+                  onRewardClaimed: _loadAccount,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     ],
   );
@@ -684,81 +656,4 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
       ),
     ],
   );
-}
-
-class _LobbyBoardPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.scale(size.width / 170);
-    final colors = [
-      AppColors.red,
-      AppColors.mint,
-      AppColors.gold,
-      AppColors.blue,
-    ];
-    final board = Rect.fromLTWH(30, 4, 112, 112);
-    canvas.save();
-    canvas.translate(86, 60);
-    canvas.rotate(-.12);
-    canvas.translate(-86, -60);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(board.inflate(5), const Radius.circular(18)),
-      Paint()..color = const Color(0xFF101A30),
-    );
-    for (var i = 0; i < 4; i++) {
-      final left = 30.0 + (i % 2) * 58;
-      final top = 4.0 + (i ~/ 2) * 58;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(left, top, 54, 54),
-          const Radius.circular(12),
-        ),
-        Paint()..color = colors[i].withValues(alpha: .85),
-      );
-      for (var j = 0; j < 4; j++) {
-        canvas.drawCircle(
-          Offset(left + 17 + (j % 2) * 20, top + 17 + (j ~/ 2) * 20),
-          6,
-          Paint()..color = Colors.white.withValues(alpha: .85),
-        );
-      }
-    }
-    canvas.restore();
-    canvas.save();
-    canvas.translate(116, 91);
-    canvas.rotate(.17);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-22, -22, 48, 48),
-        const Radius.circular(12),
-      ),
-      Paint()..color = Colors.black26,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-24, -26, 48, 48),
-        const Radius.circular(12),
-      ),
-      Paint()..color = Colors.white,
-    );
-    for (final p in [
-      const Offset(-12, -14),
-      const Offset(12, -14),
-      const Offset(0, -2),
-      const Offset(-12, 10),
-      const Offset(12, 10),
-    ]) {
-      canvas.drawCircle(
-        p,
-        3.5,
-        Paint()..color = p.dx == 0 ? AppColors.coral : const Color(0xFF253456),
-      );
-    }
-    canvas.restore();
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

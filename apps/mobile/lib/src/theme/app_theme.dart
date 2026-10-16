@@ -8,10 +8,10 @@ class AppTheme {
   static ThemeData get darkTheme {
     final scheme =
         ColorScheme.fromSeed(
-          seedColor: AppColors.mint,
+          seedColor: AppColors.primary,
           brightness: Brightness.dark,
         ).copyWith(
-          primary: AppColors.mint,
+          primary: AppColors.primary,
           onPrimary: const Color(0xFF07271F),
           secondary: AppColors.primaryLight,
           surface: AppColors.surface,
@@ -81,7 +81,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.mint,
+          backgroundColor: AppColors.primary,
           foregroundColor: const Color(0xFF07271F),
           minimumSize: const Size(48, 52),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -93,7 +93,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.mint,
+          backgroundColor: AppColors.primary,
           foregroundColor: const Color(0xFF07271F),
           elevation: 0,
           minimumSize: const Size(48, 48),

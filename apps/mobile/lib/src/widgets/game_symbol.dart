@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Local vector artwork for core app icons; no font or network dependency.
+import 'game_asset.dart';
+
+/// Bundled 3D game art with local vector and Material utility fallbacks.
 class GameSymbol extends StatelessWidget {
   const GameSymbol(this.icon, {super.key, this.size = 24, this.color});
   final IconData icon;
@@ -8,6 +10,8 @@ class GameSymbol extends StatelessWidget {
   final Color? color;
   @override
   Widget build(BuildContext context) {
+    final asset = GameAsset.forIcon(icon);
+    if (asset != null) return GameAsset(asset, size: size);
     final kind = _kind(icon);
     if (kind == null) return Icon(icon, size: size, color: color);
     return SizedBox(
@@ -140,6 +144,21 @@ class _SymbolPainter extends CustomPainter {
         );
     void path(List<Offset> points, {bool closed = false, bool solid = false}) {
       final shape = Path()..addPolygon(points, closed);
+      if (closed) {
+        canvas.drawPath(
+          shape,
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.lerp(color, Colors.white, .6)!,
+                color,
+                Color.lerp(color, Colors.black, .25)!,
+              ],
+            ).createShader(const Rect.fromLTWH(0, 0, 24, 24)),
+        );
+      }
       canvas.drawPath(shape, solid ? fill : p);
     }
 

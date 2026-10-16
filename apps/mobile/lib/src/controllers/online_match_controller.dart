@@ -241,16 +241,12 @@ class OnlineMatchController extends StateNotifier<OnlineMatchState> {
 
       case 'DICE_ROLLED':
         final val = payload['value'] as int?;
-        final rollerSeat = payload['seatIndex'] as int?;
         _stopCountdown();
         _requestTimer?.cancel();
         state = state.copyWith(
           diceValue: val,
-          // The shared board shows every result, but only animate this
-          // player's die for their own roll.
-          rollSequence: rollerSeat == state.mySeatIndex
-              ? state.rollSequence + 1
-              : state.rollSequence,
+          // Every authoritative roll animates on the shared table.
+          rollSequence: state.rollSequence + 1,
           isAnimating: true,
           requestPending: false,
           legalMoves: [],

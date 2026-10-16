@@ -26,3 +26,7 @@ __pycache__/
 *.sqlite3
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Local browser review profiles
+.chrome-ui-review*/
+lobby-review.png

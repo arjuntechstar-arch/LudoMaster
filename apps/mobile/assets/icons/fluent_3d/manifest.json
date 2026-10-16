@@ -1,0 +1,121 @@
+{
+  "package": "Microsoft Fluent UI Emoji - 3D",
+  "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+  "license": "MIT",
+  "assets": [
+    {
+      "name": "bag",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Money%20bag/3D/money_bag_3d.png",
+      "sha256": "cec19b9cf0beac5bbd27a07dcbe1e68c54b04112b4641165705ccb920f230292",
+      "bytes": 34132
+    },
+    {
+      "name": "chat",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Speech%20balloon/3D/speech_balloon_3d.png",
+      "sha256": "b9bdb19ef2e550923bc4f541de049f1633883619564b2aa140a968eaf1d69a0d",
+      "bytes": 19211
+    },
+    {
+      "name": "coin",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Coin/3D/coin_3d.png",
+      "sha256": "17e2a0c226342fe2cdd2612c56f5dd188870d1435076f47600313c04876f843b",
+      "bytes": 35502
+    },
+    {
+      "name": "controller",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Video%20game/3D/video_game_3d.png",
+      "sha256": "4b01e22089defe553717d49624e673cb5492ecdd9c6a8eddb7e6ba12d400c0da",
+      "bytes": 31507
+    },
+    {
+      "name": "crown",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Crown/3D/crown_3d.png",
+      "sha256": "817095bb1423468afa155317ba04ca333957d51757a8d3326856ee8707c0edd6",
+      "bytes": 32050
+    },
+    {
+      "name": "dice",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Game%20die/3D/game_die_3d.png",
+      "sha256": "454d51562973cf3af447db64832905d8f3fc3bbc7508c5a8bf79d2771edbbe4c",
+      "bytes": 37318
+    },
+    {
+      "name": "event",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Calendar/3D/calendar_3d.png",
+      "sha256": "7c377466753d5c5062e60edec0258ac78c512df423add89b2dd359035592d8ef",
+      "bytes": 41180
+    },
+    {
+      "name": "friends",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Busts%20in%20silhouette/3D/busts_in_silhouette_3d.png",
+      "sha256": "1169de2f4d600067bc3a135d584cbbfc38ef5212148089dcaff7dedb0dc3d805",
+      "bytes": 32792
+    },
+    {
+      "name": "gem",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Gem%20stone/3D/gem_stone_3d.png",
+      "sha256": "50dd4109b524203fc9e208e24498f6f468c54f104b4eb41e914dec203e841820",
+      "bytes": 18806
+    },
+    {
+      "name": "gift",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Wrapped%20gift/3D/wrapped_gift_3d.png",
+      "sha256": "fc9c446401c9fb347f4e9f47e6023247208126047d9ec32059d5e14e127fb562",
+      "bytes": 31757
+    },
+    {
+      "name": "globe",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Globe%20showing%20europe-africa/3D/globe_showing_europe-africa_3d.png",
+      "sha256": "a69baec3cc48ed5206d171f5f494e3ab06665277ec4a3acc7e6bf3962ee460ad",
+      "bytes": 42555
+    },
+    {
+      "name": "heart",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Red%20heart/3D/red_heart_3d.png",
+      "sha256": "7218cb9f08ed1ef38fcd83fe699a1125d07f50725f4c87a68cb7c9f4efb3c32b",
+      "bytes": 29389
+    },
+    {
+      "name": "home",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/House/3D/house_3d.png",
+      "sha256": "0279b073321551b55c86a10dc2fff5bf66c8dec895672004da43482c5a1de87c",
+      "bytes": 43007
+    },
+    {
+      "name": "medal",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sports%20medal/3D/sports_medal_3d.png",
+      "sha256": "7d62249a2978fb4be1bb6286d6dbd569e8cf1013d760ae89e7a38c63801c0f5c",
+      "bytes": 17494
+    },
+    {
+      "name": "robot",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Robot/3D/robot_3d.png",
+      "sha256": "3f9b5a00b53c8bddda36b6a3f68d00718d9d7d8c04f986a3248e55ae93a7961b",
+      "bytes": 43362
+    },
+    {
+      "name": "shield",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Shield/3D/shield_3d.png",
+      "sha256": "3c1cc1b14f8dd43e8532f9fb751769cd68382a9f25c012b0549e352a8d953a94",
+      "bytes": 30024
+    },
+    {
+      "name": "sparkles",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sparkles/3D/sparkles_3d.png",
+      "sha256": "e4490c9ff74a3fd73a8f99c760d65b6ed51b8a3e4ad28da137fec050b77e1058",
+      "bytes": 21948
+    },
+    {
+      "name": "target",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bullseye/3D/bullseye_3d.png",
+      "sha256": "2b2a2d9eec76c5649b8207b050f9135ce666c9d94694e5577aade50c53768437",
+      "bytes": 42883
+    },
+    {
+      "name": "trophy",
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Trophy/3D/trophy_3d.png",
+      "sha256": "7c4a9805f354eb2aec35063a95a4043306efc726324c0d128883f24497857bbc",
+      "bytes": 31910
+    }
+  ]
+}
