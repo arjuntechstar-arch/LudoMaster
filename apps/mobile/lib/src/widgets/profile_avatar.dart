@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'game_symbol.dart';
+
 class FreeAvatar {
   const FreeAvatar(this.id, this.name, this.icon, this.color);
   final String id;
@@ -46,7 +48,7 @@ class ProfileAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: avatar.color.withValues(alpha: 0.22),
-      child: Icon(avatar.icon, color: avatar.color, size: radius * 1.25),
+      child: GameSymbol(avatar.icon, color: avatar.color, size: radius * 1.25),
     );
   }
 }

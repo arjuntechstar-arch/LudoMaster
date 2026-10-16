@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_client.dart';
 import '../theme/app_colors.dart';
 
@@ -64,7 +65,9 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
       await widget.apiClient.submitReport(
         reportedUserId: widget.reportedUserId,
         category: _category,
-        description: _descController.text.trim().isNotEmpty ? _descController.text.trim() : null,
+        description: _descController.text.trim().isNotEmpty
+            ? _descController.text.trim()
+            : null,
         matchId: widget.matchId,
       );
 
@@ -79,7 +82,9 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Report submitted against ${widget.reportedDisplayName}. Thank you for keeping LudoMaster safe!'),
+            content: Text(
+              'Report submitted against ${widget.reportedDisplayName}. Thank you for keeping LudoMaster safe!',
+            ),
             backgroundColor: AppColors.green,
           ),
         );
@@ -88,7 +93,10 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit report: $e'), backgroundColor: AppColors.red),
+          SnackBar(
+            content: Text('Failed to submit report: $e'),
+            backgroundColor: AppColors.red,
+          ),
         );
       }
     }
@@ -106,7 +114,11 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
           Expanded(
             child: Text(
               'Report ${widget.reportedDisplayName}',
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -128,9 +140,14 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 3),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.gold.withValues(alpha: 0.15) : AppColors.surfaceElevated,
+                    color: isSelected
+                        ? AppColors.gold.withValues(alpha: 0.15)
+                        : AppColors.surfaceElevated,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isSelected ? AppColors.gold : Colors.white12,
@@ -140,17 +157,25 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
                   child: Row(
                     children: [
                       Icon(
-                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                        color: isSelected ? AppColors.gold : AppColors.textSecondary,
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        color: isSelected
+                            ? AppColors.gold
+                            : AppColors.textSecondary,
                         size: 18,
                       ),
                       const SizedBox(width: 10),
-                      Text(
-                        c['label']!,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.white70,
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      Expanded(
+                        child: Text(
+                          c['label']!,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.white70,
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                         ),
                       ),
                     ],
@@ -165,7 +190,10 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
               style: const TextStyle(color: Colors.white, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Additional details (optional)...',
-                hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                hintStyle: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                ),
                 filled: true,
                 fillColor: AppColors.surfaceElevated,
                 border: OutlineInputBorder(
@@ -192,7 +220,10 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -204,7 +235,10 @@ class _ReportUserDialogState extends State<ReportUserDialog> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Text('Submit Report'),
         ),

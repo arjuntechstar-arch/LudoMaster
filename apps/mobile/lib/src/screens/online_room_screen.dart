@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/api_client.dart';
+import '../theme/app_colors.dart';
 import '../widgets/voice_chat_controller_widget.dart';
 import 'friends_screen.dart';
 import 'online_game_screen.dart';
@@ -63,12 +64,14 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
         maxPlayers: _maxPlayers,
         fillWithBots: _fillWithBots,
       );
+      if (!mounted) return;
       setState(() {
         _room = room;
         _isLoading = false;
       });
       _startPollingRoom(room.id);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -86,12 +89,14 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
 
     try {
       final room = await widget.apiClient.joinRoom(code);
+      if (!mounted) return;
       setState(() {
         _room = room;
         _isLoading = false;
       });
       _startPollingRoom(room.id);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -100,7 +105,6 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
   }
 
   void _startPollingRoom(String roomId) {
-    // Poll room state every 2 seconds until match starts
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted || _room == null) return false;
@@ -108,10 +112,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
       try {
         final updated = await widget.apiClient.getRoom(roomId);
         if (!mounted) return false;
-
-        setState(() {
-          _room = updated;
-        });
+        setState(() => _room = updated);
 
         if (updated.status == 'ACTIVE' && updated.matchId != null) {
           _launchGame(updated.matchId!);
@@ -137,9 +138,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
         !myMember.isReady,
       );
       if (!mounted) return;
-      setState(() {
-        _room = updated;
-      });
+      setState(() => _room = updated);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -154,9 +153,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
     try {
       final updated = await widget.apiClient.startRoomMatch(_room!.id);
       if (!mounted) return;
-      if (updated.matchId != null) {
-        _launchGame(updated.matchId!);
-      }
+      if (updated.matchId != null) _launchGame(updated.matchId!);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -180,7 +177,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -200,158 +197,182 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
   }
 
   Widget _buildLobbySelection() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Spacer(),
-          const Icon(Icons.groups_rounded, size: 80, color: Color(0xFF38BDF8)),
-          const SizedBox(height: 16),
-          const Text(
-            'Play With Friends',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Create a private room for 2–6 friends or join with a room code',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
-          ),
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFEF4444)),
-            ),
-          ],
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'CLASSIC', label: Text('Classic')),
-              ButtonSegment(value: 'QUICK', label: Text('Quick')),
-              ButtonSegment(value: 'TEAM', label: Text('2v2 Team')),
-            ],
-            selected: {_createMode},
-            onSelectionChanged: (val) {
-              setState(() {
-                _createMode = val.first;
-                if (_createMode == 'TEAM') _maxPlayers = 4;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<int>(
-            initialValue: _maxPlayers,
-            dropdownColor: const Color(0xFF1E293B),
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: 'Player seats',
-              labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-              filled: true,
-              fillColor: const Color(0xFF1E293B),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            items: (_createMode == 'TEAM' ? [4] : [2, 3, 4, 5, 6])
-                .map<DropdownMenuItem<int>>(
-                  (count) => DropdownMenuItem(
-                    value: count,
-                    child: Text('$count players'),
+    final compact = MediaQuery.sizeOf(context).width < 360;
+    final padding = compact ? 16.0 : 24.0;
+
+    return CustomScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(padding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 16),
+                Icon(
+                  Icons.groups_rounded,
+                  size: compact ? 64 : 80,
+                  color: const Color(0xFF38BDF8),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Play With Friends',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                )
-                .toList(),
-            onChanged: _isLoading
-                ? null
-                : (count) {
-                    if (count != null) setState(() => _maxPlayers = count);
-                  },
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text(
-              'Fill empty seats with bots',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            subtitle: Text(
-              _fillWithBots
-                  ? 'Start with at least 2 people; bots fill open seats.'
-                  : 'Wait until every seat is filled by a friend.',
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-            ),
-            value: _fillWithBots,
-            activeTrackColor: const Color(0xFF38BDF8),
-            onChanged: _isLoading
-                ? null
-                : (value) => setState(() => _fillWithBots = value),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _createRoom,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Create a private room for 2–6 friends or join with a room code',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Color(0xFFEF4444)),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<String>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(value: 'CLASSIC', label: Text('Classic')),
+                      ButtonSegment(value: 'QUICK', label: Text('Quick')),
+                      ButtonSegment(value: 'TEAM', label: Text('2v2 Team')),
+                    ],
+                    selected: {_createMode},
+                    onSelectionChanged: (val) {
+                      setState(() {
+                        _createMode = val.first;
+                        if (_createMode == 'TEAM') _maxPlayers = 4;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  initialValue: _maxPlayers,
+                  dropdownColor: AppColors.surfaceCard,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Player seats',
+                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: AppColors.surfaceCard,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  )
-                : const Text(
-                    'CREATE ROOM',
+                  ),
+                  items: (_createMode == 'TEAM' ? [4] : [2, 3, 4, 5, 6])
+                      .map<DropdownMenuItem<int>>(
+                        (count) => DropdownMenuItem(
+                          value: count,
+                          child: Text('$count players'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _isLoading
+                      ? null
+                      : (count) {
+                          if (count != null) {
+                            setState(() => _maxPlayers = count);
+                          }
+                        },
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Fill empty seats with bots',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _fillWithBots
+                        ? 'Start with at least 2 people; bots fill open seats.'
+                        : 'Wait until every seat is filled by a friend.',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 12,
+                    ),
+                  ),
+                  value: _fillWithBots,
+                  activeTrackColor: const Color(0xFF38BDF8),
+                  onChanged: _isLoading
+                      ? null
+                      : (value) => setState(() => _fillWithBots = value),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _createRoom,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'CREATE ROOM',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: _isLoading ? null : _showJoinDialog,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF38BDF8), width: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'JOIN WITH CODE',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Color(0xFF38BDF8),
                     ),
                   ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: _isLoading ? null : _showJoinDialog,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF38BDF8), width: 2),
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text(
-              'JOIN WITH CODE',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF38BDF8),
-              ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-          const Spacer(),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   void _showJoinDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.surfaceCard,
         title: const Text(
           'Enter Room Code',
           style: TextStyle(color: Colors.white),
@@ -413,19 +434,19 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
     final colors = room.maxPlayers == 2
         ? [const Color(0xFFEF4444), const Color(0xFFEAB308)]
         : [
-            const Color(0xFFEF4444), // Red
-            const Color(0xFF22C55E), // Green
-            const Color(0xFFEAB308), // Yellow
-            const Color(0xFF3B82F6), // Blue
-            const Color(0xFFFF6B00), // Orange
-            const Color(0xFFA855F7), // Purple
+            const Color(0xFFEF4444),
+            const Color(0xFF22C55E),
+            const Color(0xFFEAB308),
+            const Color(0xFF3B82F6),
+            const Color(0xFFFF6B00),
+            const Color(0xFFA855F7),
           ];
+    final compact = MediaQuery.sizeOf(context).width < 360;
 
     return Padding(
-      padding: const EdgeInsets.all(20.0),
+      padding: EdgeInsets.all(compact ? 14 : 20),
       child: Column(
         children: [
-          // Room Code Card
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             decoration: BoxDecoration(
@@ -438,26 +459,34 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'ROOM CODE',
-                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      room.code,
-                      style: const TextStyle(
-                        color: Color(0xFF38BDF8),
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 4,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'ROOM CODE',
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          room.code,
+                          style: const TextStyle(
+                            color: Color(0xFF38BDF8),
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.copy_rounded, color: Colors.white),
@@ -491,9 +520,9 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                     );
                   },
                   icon: const Icon(Icons.share, size: 18),
-                  label: const Text(
-                    'Copy Invite',
-                    style: TextStyle(fontSize: 13),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Copy Invite', style: TextStyle(fontSize: 13)),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF38BDF8),
@@ -519,9 +548,12 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                     );
                   },
                   icon: const Icon(Icons.person_add, size: 18),
-                  label: const Text(
-                    'Invite Friends',
-                    style: TextStyle(fontSize: 13),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Invite Friends',
+                      style: TextStyle(fontSize: 13),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
@@ -556,8 +588,6 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Room seats
           Expanded(
             child: ListView.separated(
               itemCount: room.maxPlayers,
@@ -586,7 +616,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.surfaceCard,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isOccupied
@@ -621,6 +651,8 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                                   : room.fillWithBots
                                   ? 'Empty Seat (Bot Fill)'
                                   : 'Waiting for friend',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: isOccupied
                                     ? Colors.white
@@ -629,7 +661,10 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                                 fontSize: 16,
                               ),
                             ),
-                            Row(
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
                               children: [
                                 if (isOccupied)
                                   Text(
@@ -645,8 +680,7 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                                       fontSize: 12,
                                     ),
                                   ),
-                                if (room.mode == 'TEAM') ...[
-                                  if (isOccupied) const SizedBox(width: 8),
+                                if (room.mode == 'TEAM')
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 6,
@@ -667,7 +701,6 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                                       ),
                                     ),
                                   ),
-                                ],
                               ],
                             ),
                           ],
@@ -685,8 +718,6 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
               },
             ),
           ),
-
-          // Actions
           if (isHost)
             ElevatedButton(
               onPressed: _isLoading || !canStartMatch ? null : _startMatch,
@@ -699,21 +730,24 @@ class _OnlineRoomScreenState extends State<OnlineRoomScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: Text(
-                _isLoading
-                    ? 'STARTING…'
-                    : room.members.length < 2
-                    ? 'WAITING FOR PLAYER'
-                    : !room.fillWithBots &&
-                          room.members.length < room.maxPlayers
-                    ? 'WAITING FOR ${room.maxPlayers - room.members.length} MORE'
-                    : canStartMatch
-                    ? 'START MATCH'
-                    : 'WAITING FOR READY PLAYERS',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _isLoading
+                      ? 'STARTING…'
+                      : room.members.length < 2
+                      ? 'WAITING FOR PLAYER'
+                      : !room.fillWithBots &&
+                            room.members.length < room.maxPlayers
+                      ? 'WAITING FOR ${room.maxPlayers - room.members.length} MORE'
+                      : canStartMatch
+                      ? 'START MATCH'
+                      : 'WAITING FOR READY PLAYERS',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             )

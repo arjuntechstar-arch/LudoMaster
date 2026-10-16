@@ -7,7 +7,6 @@ import 'package:game_engine/game_engine.dart';
 import '../controllers/game_controller.dart';
 import '../services/api_client.dart';
 import '../services/storage_service.dart';
-import '../theme/app_colors.dart';
 import '../widgets/app_loader.dart';
 import '../widgets/auth_dialog.dart';
 import '../widgets/play_with_friends_dialog.dart';
@@ -29,7 +28,14 @@ import 'season_screen.dart';
 import 'setup_screen.dart';
 import 'store_inventory_screen.dart';
 import 'tournament_screen.dart';
+import 'tabbed_home_screen.dart';
 
+/// Game-first lobby inspired by successful casual board-game menus.
+///
+/// The screen deliberately avoids standard app-shell patterns such as tab bars,
+/// list dashboards and equal-weight navigation. The player HUD, game identity and
+/// four primary play modes own the visual hierarchy; progression/social systems
+/// sit around them as secondary game controls.
 class ModernHomeScreen extends ConsumerStatefulWidget {
   const ModernHomeScreen({super.key});
 
@@ -37,20 +43,25 @@ class ModernHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<ModernHomeScreen> createState() => _ModernHomeScreenState();
 }
 
-class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen> {
+class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
+    with SingleTickerProviderStateMixin {
   final ApiClient _apiClient = ApiClient();
   UserMeModel? _account;
   DailyRewardStatusModel? _dailyReward;
   GameState? _savedGame;
   int _unreadNotifications = 0;
   int _roomInvites = 0;
-  int _selectedIndex = 0;
   bool _loading = true;
   Timer? _refreshTimer;
+  late final AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
     _bootstrap();
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 20),
@@ -61,14 +72,12 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _pulseController.dispose();
     super.dispose();
   }
 
   Future<void> _bootstrap() async {
-    await Future.wait<void>([
-      _loadAccount(),
-      _loadSavedGame(),
-    ]);
+    await Future.wait<void>([_loadAccount(), _loadSavedGame()]);
     if (mounted) setState(() => _loading = false);
   }
 
@@ -94,7 +103,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen> {
       });
       await _refreshBadges();
     } catch (_) {
-      // Keep the landing experience usable offline.
+      // The lobby stays playable for local modes while the network is offline.
     }
   }
 
@@ -171,13 +180,11 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen> {
     if (changed == true) await _loadAccount();
   }
 
-  Future<void> _playOnline() => _openAuthenticated(
-        (api) => MatchmakingScreen(apiClient: api),
-      );
+  Future<void> _playOnline() =>
+      _openAuthenticated((api) => MatchmakingScreen(apiClient: api));
 
-  Future<void> _openRoom() => _openAuthenticated(
-        (api) => OnlineRoomScreen(apiClient: api),
-      );
+  Future<void> _openRoom() =>
+      _openAuthenticated((api) => OnlineRoomScreen(apiClient: api));
 
   void _playFriends() {
     final username = _account?.profile.username ?? '';
@@ -200,518 +207,402 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen> {
         .then((_) => _loadSavedGame());
   }
 
+  Future<void> _claimDailyReward() async {
+    await _ensureSession();
+    if (!mounted) return;
+    await DailyRewardsDialog.show(
+      context,
+      _apiClient,
+      onRewardClaimed: _loadAccount,
+    );
+    await _loadAccount();
+  }
+
+  void _showNotifications() {
+    showDialog<void>(
+      context: context,
+      builder: (_) => NotificationsDialog(
+        apiClient: _apiClient,
+        onRefreshHome: _loadAccount,
+      ),
+    ).then((_) => _refreshBadges());
+  }
+
+  void _showMoreMenu() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => _GameMenuSheet(
+        roomInvites: _roomInvites,
+        onTabbedHome: () {
+          Navigator.pop(sheetContext);
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('Tabbed home')),
+                body: const TabbedHomeScreen(),
+              ),
+            ),
+          ).then((_) {
+            if (mounted) _bootstrap();
+          });
+        },
+        onMissions: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => MissionsScreen(apiClient: api));
+        },
+        onAchievements: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => AchievementsScreen(apiClient: api));
+        },
+        onSeason: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => SeasonScreen(apiClient: api));
+        },
+        onTournament: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => TournamentScreen(apiClient: api));
+        },
+        onLeaderboard: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => LeaderboardScreen(apiClient: api));
+        },
+        onFriends: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => FriendsScreen(apiClient: api));
+        },
+        onClubs: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => ClubsScreen(apiClient: api));
+        },
+        onHistory: () {
+          Navigator.pop(sheetContext);
+          _openAuthenticated((api) => MatchHistoryScreen(apiClient: api));
+        },
+        onRewardPack: () {
+          Navigator.pop(sheetContext);
+          showDialog<void>(
+            context: context,
+            builder: (_) => WatchAdRewardDialog(
+              apiClient: _apiClient,
+              onRewardClaimed: _loadAccount,
+            ),
+          ).then((_) => _loadAccount());
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading && _account == null) {
       return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: AppLoader(message: 'Preparing your lobby...'),
+        backgroundColor: Color(0xFF071D55),
+        body: AppLoader(message: 'Opening game lobby...'),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF06194B),
       body: Stack(
         children: [
-          const _AmbientBackground(),
+          const Positioned.fill(child: _GameLobbyBackground()),
           SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _TopBar(
-                  account: _account,
-                  unreadNotifications: _unreadNotifications,
-                  onProfileTap: _openProfile,
-                  onNotificationsTap: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (_) => NotificationsDialog(
-                        apiClient: _apiClient,
-                        onRefreshHome: _loadAccount,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxHeight < 720;
+                return Column(
+                  children: [
+                    _PlayerHud(
+                      account: _account,
+                      notifications: _unreadNotifications,
+                      onProfile: _openProfile,
+                      onCoins: () => _openStore(initialTab: 1),
+                      onNotifications: _showNotifications,
+                      onMore: _showMoreMenu,
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          compact ? 4 : 10,
+                          16,
+                          14,
+                        ),
+                        child: Column(
+                          children: [
+                            _GameIdentity(compact: compact),
+                            SizedBox(height: compact ? 8 : 14),
+                            if (_savedGame != null) ...[
+                              _ContinueRibbon(
+                                playerCount: _savedGame!.players.length,
+                                turn: _savedGame!.sequence,
+                                onTap: _resumeGame,
+                              ),
+                              SizedBox(height: compact ? 8 : 12),
+                            ],
+                            _ModeGrid(
+                              compact: compact,
+                              pulse: _pulseController,
+                              onOnline: _playOnline,
+                              onFriends: _playFriends,
+                              onComputer: () => Navigator.of(context)
+                                  .push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => const SetupScreen(
+                                        isVsComputer: true,
+                                      ),
+                                    ),
+                                  )
+                                  .then((_) => _loadSavedGame()),
+                              onLocal: () => Navigator.of(context)
+                                  .push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => const SetupScreen(
+                                        isVsComputer: false,
+                                      ),
+                                    ),
+                                  )
+                                  .then((_) => _loadSavedGame()),
+                            ),
+                            SizedBox(height: compact ? 10 : 16),
+                            _EventRail(
+                              canClaimReward: _dailyReward?.canClaim ?? false,
+                              inviteCount: _roomInvites,
+                              onReward: _claimDailyReward,
+                              onTournament: () => _openAuthenticated(
+                                (api) => TournamentScreen(apiClient: api),
+                              ),
+                              onSeason: () => _openAuthenticated(
+                                (api) => SeasonScreen(apiClient: api),
+                              ),
+                              onFriends: () => _openAuthenticated(
+                                (api) => FriendsScreen(apiClient: api),
+                              ),
+                            ),
+                            SizedBox(height: compact ? 10 : 16),
+                            _UtilityDock(
+                              onStore: () => _openStore(initialTab: 0),
+                              onLeaderboard: () => _openAuthenticated(
+                                (api) => LeaderboardScreen(apiClient: api),
+                              ),
+                              onRoom: _openRoom,
+                              onClub: () => _openAuthenticated(
+                                (api) => ClubsScreen(apiClient: api),
+                              ),
+                              onMore: _showMoreMenu,
+                            ),
+                          ],
+                        ),
                       ),
-                    ).then((_) => _refreshBadges());
-                  },
-                  onWalletTap: () => _openStore(initialTab: 1),
-                ),
-                Expanded(
-                  child: IndexedStack(
-                    index: _selectedIndex,
-                    children: [
-                      _buildHomeTab(),
-                      _buildPlayTab(),
-                      _buildProgressTab(),
-                      _buildSocialTab(),
-                    ],
-                  ),
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.22),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_rounded),
-            selectedIcon: Icon(Icons.home_rounded, color: AppColors.primaryLight),
-            label: 'Home',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.sports_esports_rounded),
-            selectedIcon: Icon(Icons.sports_esports_rounded, color: AppColors.primaryLight),
-            label: 'Play',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible: _dailyReward?.canClaim ?? false,
-              child: const Icon(Icons.auto_awesome_rounded),
-            ),
-            selectedIcon: const Icon(Icons.auto_awesome_rounded, color: AppColors.primaryLight),
-            label: 'Progress',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible: _roomInvites > 0,
-              label: Text('$_roomInvites'),
-              child: const Icon(Icons.people_alt_rounded),
-            ),
-            selectedIcon: const Icon(Icons.people_alt_rounded, color: AppColors.primaryLight),
-            label: 'Social',
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildHomeTab() {
-    final account = _account;
-    final level = account?.profile.level ?? 1;
-    final xp = account?.profile.xp ?? 0;
-    final xpTarget = 100 * level + 50 * (level - 1) * (level - 1);
-    final progress = (xp / (xpTarget <= 0 ? 1 : xpTarget)).clamp(0.0, 1.0);
+class _GameLobbyBackground extends StatelessWidget {
+  const _GameLobbyBackground();
 
-    return _TabScroll(
-      children: [
-        _WelcomeCard(
-          name: account?.profile.displayName ?? 'Player',
-          level: level,
-          progress: progress,
-          onTap: _openProfile,
-        ),
-        const SizedBox(height: 18),
-        if (_savedGame != null) ...[
-          _ResumeCard(
-            playerCount: _savedGame!.players.length,
-            turn: _savedGame!.sequence,
-            onTap: _resumeGame,
-          ),
-          const SizedBox(height: 18),
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+        painter: _LobbyPainter(),
+        child: const SizedBox.expand(),
+      );
+}
+
+class _LobbyPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final background = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF123A91), Color(0xFF0A2870), Color(0xFF04143F)],
+      ).createShader(rect);
+    canvas.drawRect(rect, background);
+
+    final glow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF2E74FF).withValues(alpha: 0.36),
+          Colors.transparent,
         ],
-        _PrimaryPlayCard(
-          onPlay: _playOnline,
-          onFriends: _playFriends,
+      ).createShader(
+        Rect.fromCircle(
+          center: Offset(size.width / 2, size.height * 0.38),
+          radius: size.width * 0.72,
         ),
-        const SizedBox(height: 24),
-        const _SectionTitle(
-          title: 'For you',
-          subtitle: 'A few useful shortcuts, not every feature at once',
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 120,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _MiniActionCard(
-                icon: Icons.card_giftcard_rounded,
-                title: 'Daily reward',
-                subtitle: (_dailyReward?.canClaim ?? false)
-                    ? 'Ready to claim'
-                    : 'Come back tomorrow',
-                color: AppColors.gold,
-                badge: (_dailyReward?.canClaim ?? false) ? 'CLAIM' : null,
-                onTap: () async {
-                  await _ensureSession();
-                  if (!mounted) return;
-                  await DailyRewardsDialog.show(
-                    context,
-                    _apiClient,
-                    onRewardClaimed: _loadAccount,
-                  );
-                  await _loadAccount();
-                },
-              ),
-              _MiniActionCard(
-                icon: Icons.flag_rounded,
-                title: 'Missions',
-                subtitle: 'Complete goals',
-                color: AppColors.mint,
-                onTap: () => _openAuthenticated(
-                  (api) => MissionsScreen(apiClient: api),
-                ),
-              ),
-              _MiniActionCard(
-                icon: Icons.storefront_rounded,
-                title: 'Store',
-                subtitle: 'Boards & avatars',
-                color: AppColors.cyan,
-                onTap: () => _openStore(initialTab: 0),
-              ),
-              _MiniActionCard(
-                icon: Icons.workspace_premium_rounded,
-                title: 'Season',
-                subtitle: 'Track your pass',
-                color: AppColors.coral,
-                onTap: () => _openAuthenticated(
-                  (api) => SeasonScreen(apiClient: api),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      );
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height * 0.38),
+      size.width * 0.72,
+      glow,
     );
+
+    final tilePaint = Paint()..color = Colors.white.withValues(alpha: 0.025);
+    const tile = 54.0;
+    for (double y = 110; y < size.height; y += tile) {
+      for (double x = -tile; x < size.width + tile; x += tile) {
+        final shifted = ((y / tile).round().isEven) ? x : x + tile / 2;
+        canvas.save();
+        canvas.translate(shifted + tile / 2, y + tile / 2);
+        canvas.rotate(0.785398);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: Offset.zero,
+              width: 24,
+              height: 24,
+            ),
+            const Radius.circular(5),
+          ),
+          tilePaint,
+        );
+        canvas.restore();
+      }
+    }
   }
 
-  Widget _buildPlayTab() => _TabScroll(
-        children: [
-          const _PageHeading(
-            eyebrow: 'CHOOSE A MODE',
-            title: 'How do you want to play?',
-            subtitle: 'Jump into the right match without scrolling through the whole app.',
-          ),
-          const SizedBox(height: 22),
-          _FeatureTile(
-            icon: Icons.flash_on_rounded,
-            title: 'Quick Match',
-            subtitle: 'Fast online matchmaking for 2–6 players',
-            color: AppColors.primary,
-            badge: 'ONLINE',
-            onTap: _playOnline,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _SquareModeCard(
-                  icon: Icons.smart_toy_rounded,
-                  title: 'Vs Computer',
-                  subtitle: 'Practice offline',
-                  color: AppColors.blue,
-                  onTap: () => Navigator.of(context)
-                      .push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SetupScreen(isVsComputer: true),
-                        ),
-                      )
-                      .then((_) => _loadSavedGame()),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _SquareModeCard(
-                  icon: Icons.groups_2_rounded,
-                  title: 'Pass & Play',
-                  subtitle: 'Same device',
-                  color: AppColors.mint,
-                  onTap: () => Navigator.of(context)
-                      .push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SetupScreen(isVsComputer: false),
-                        ),
-                      )
-                      .then((_) => _loadSavedGame()),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _SquareModeCard(
-                  icon: Icons.group_add_rounded,
-                  title: 'Friends',
-                  subtitle: 'Invite by username',
-                  color: AppColors.coral,
-                  onTap: _playFriends,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _SquareModeCard(
-                  icon: Icons.key_rounded,
-                  title: 'Room Code',
-                  subtitle: 'Create or join room',
-                  color: AppColors.gold,
-                  onTap: _openRoom,
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-
-  Widget _buildProgressTab() => _TabScroll(
-        children: [
-          const _PageHeading(
-            eyebrow: 'YOUR JOURNEY',
-            title: 'Progress & rewards',
-            subtitle: 'Challenges, achievements and competitive progression live here.',
-          ),
-          const SizedBox(height: 22),
-          _FeatureTile(
-            icon: Icons.card_giftcard_rounded,
-            title: 'Daily Rewards',
-            subtitle: (_dailyReward?.canClaim ?? false)
-                ? 'Your reward is ready to claim'
-                : 'Check your reward streak',
-            color: AppColors.gold,
-            badge: (_dailyReward?.canClaim ?? false) ? 'CLAIM' : null,
-            onTap: () async {
-              await _ensureSession();
-              if (!mounted) return;
-              await DailyRewardsDialog.show(
-                context,
-                _apiClient,
-                onRewardClaimed: _loadAccount,
-              );
-              await _loadAccount();
-            },
-          ),
-          const SizedBox(height: 12),
-          _ListAction(
-            icon: Icons.flag_rounded,
-            title: 'Missions',
-            subtitle: 'Daily and weekly objectives',
-            color: AppColors.mint,
-            onTap: () => _openAuthenticated((api) => MissionsScreen(apiClient: api)),
-          ),
-          _ListAction(
-            icon: Icons.emoji_events_rounded,
-            title: 'Achievements',
-            subtitle: 'Badges and milestones',
-            color: AppColors.purple,
-            onTap: () => _openAuthenticated((api) => AchievementsScreen(apiClient: api)),
-          ),
-          _ListAction(
-            icon: Icons.workspace_premium_rounded,
-            title: 'Season Pass',
-            subtitle: 'Season rewards and progression',
-            color: AppColors.coral,
-            onTap: () => _openAuthenticated((api) => SeasonScreen(apiClient: api)),
-          ),
-          _ListAction(
-            icon: Icons.account_tree_rounded,
-            title: 'Tournaments',
-            subtitle: 'Enter competitive brackets',
-            color: AppColors.gold,
-            onTap: () => _openAuthenticated((api) => TournamentScreen(apiClient: api)),
-          ),
-          _ListAction(
-            icon: Icons.leaderboard_rounded,
-            title: 'Leaderboard',
-            subtitle: 'See how you rank',
-            color: AppColors.blue,
-            onTap: () => _openAuthenticated((api) => LeaderboardScreen(apiClient: api)),
-          ),
-          _ListAction(
-            icon: Icons.play_circle_fill_rounded,
-            title: 'Reward Packs',
-            subtitle: 'Watch an ad or collect bonus coins',
-            color: AppColors.cyan,
-            onTap: () {
-              showDialog<void>(
-                context: context,
-                builder: (_) => WatchAdRewardDialog(
-                  apiClient: _apiClient,
-                  onRewardClaimed: _loadAccount,
-                ),
-              ).then((_) => _loadAccount());
-            },
-          ),
-          _ListAction(
-            icon: Icons.storefront_rounded,
-            title: 'Store & Inventory',
-            subtitle: 'Customize your board and profile',
-            color: AppColors.primaryLight,
-            onTap: () => _openStore(initialTab: 0),
-          ),
-        ],
-      );
-
-  Widget _buildSocialTab() => _TabScroll(
-        children: [
-          const _PageHeading(
-            eyebrow: 'COMMUNITY',
-            title: 'Play together',
-            subtitle: 'Friends, clubs and your match history are grouped in one place.',
-          ),
-          const SizedBox(height: 22),
-          _FeatureTile(
-            icon: Icons.people_alt_rounded,
-            title: 'Friends & Invites',
-            subtitle: _roomInvites > 0
-                ? '$_roomInvites room invite${_roomInvites == 1 ? '' : 's'} waiting'
-                : 'Find friends and manage invitations',
-            color: AppColors.mint,
-            badge: _roomInvites > 0 ? '$_roomInvites NEW' : null,
-            onTap: () => _openAuthenticated((api) => FriendsScreen(apiClient: api)),
-          ),
-          const SizedBox(height: 12),
-          _ListAction(
-            icon: Icons.group_add_rounded,
-            title: 'Play With Friends',
-            subtitle: 'Invite by username or share a room',
-            color: AppColors.coral,
-            onTap: _playFriends,
-          ),
-          _ListAction(
-            icon: Icons.shield_rounded,
-            title: 'Clubs',
-            subtitle: 'Build or join a community',
-            color: AppColors.gold,
-            onTap: () => _openAuthenticated((api) => ClubsScreen(apiClient: api)),
-          ),
-          _ListAction(
-            icon: Icons.history_rounded,
-            title: 'Match History',
-            subtitle: 'Review recent games and results',
-            color: AppColors.primaryLight,
-            onTap: () => _openAuthenticated((api) => MatchHistoryScreen(apiClient: api)),
-          ),
-          _ListAction(
-            icon: Icons.key_rounded,
-            title: 'Online Rooms',
-            subtitle: 'Create or join with a room code',
-            color: AppColors.blue,
-            onTap: _openRoom,
-          ),
-        ],
-      );
-}
-
-class _AmbientBackground extends StatelessWidget {
-  const _AmbientBackground();
-
   @override
-  Widget build(BuildContext context) => IgnorePointer(
-        child: Stack(
-          children: [
-            Positioned(
-              top: -110,
-              right: -90,
-              child: _GlowOrb(color: AppColors.primary, size: 260),
-            ),
-            Positioned(
-              top: 300,
-              left: -120,
-              child: _GlowOrb(color: AppColors.cyan, size: 230),
-            ),
-          ],
-        ),
-      );
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.color, required this.size});
-
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.16),
-              color.withValues(alpha: 0),
-            ],
-          ),
-        ),
-      );
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({
+class _PlayerHud extends StatelessWidget {
+  const _PlayerHud({
     required this.account,
-    required this.unreadNotifications,
-    required this.onProfileTap,
-    required this.onNotificationsTap,
-    required this.onWalletTap,
+    required this.notifications,
+    required this.onProfile,
+    required this.onCoins,
+    required this.onNotifications,
+    required this.onMore,
   });
 
   final UserMeModel? account;
-  final int unreadNotifications;
-  final VoidCallback onProfileTap;
-  final VoidCallback onNotificationsTap;
-  final VoidCallback onWalletTap;
+  final int notifications;
+  final VoidCallback onProfile;
+  final VoidCallback onCoins;
+  final VoidCallback onNotifications;
+  final VoidCallback onMore;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(18, 12, 14, 10),
-        child: Row(
-          children: [
-            const AppLogo(size: 38),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'LUDOMASTER',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                    ),
+  Widget build(BuildContext context) {
+    final profile = account?.profile;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: onProfile,
+            borderRadius: BorderRadius.circular(32),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF163D91), Color(0xFF0B2B75)],
+                ),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: const Color(0xFF68B8FF), width: 1.4),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x55000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
                   ),
-                  Text(
-                    'Play. Progress. Connect.',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ProfileAvatar(
+                        avatarId: profile?.avatarId ?? 'avatar_0',
+                        radius: 21,
+                      ),
+                      Positioned(
+                        right: -4,
+                        bottom: -3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFC928),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white, width: 1),
+                          ),
+                          child: Text(
+                            '${profile?.level ?? 1}',
+                            style: const TextStyle(
+                              color: Color(0xFF4A2A00),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 84),
+                    child: Text(
+                      profile?.displayName ?? 'Player',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        shadows: [Shadow(color: Colors.black45, blurRadius: 3)],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            _WalletPill(
-              icon: Icons.monetization_on_rounded,
-              value: account?.wallet.coins ?? 1000,
-              color: AppColors.gold,
-              onTap: onWalletTap,
-            ),
-            const SizedBox(width: 6),
-            _RoundIconButton(
-              icon: Icons.notifications_none_rounded,
-              badge: unreadNotifications,
-              onTap: onNotificationsTap,
-            ),
-            const SizedBox(width: 6),
-            GestureDetector(
-              onTap: onProfileTap,
-              child: ProfileAvatar(
-                avatarId: account?.profile.avatarId ?? 'avatar_0',
-                radius: 18,
-              ),
-            ),
-          ],
-        ),
-      );
+          ),
+          const Spacer(),
+          _CurrencyHud(
+            icon: Icons.monetization_on_rounded,
+            value: account?.wallet.coins ?? 1000,
+            color: const Color(0xFFFFC928),
+            onTap: onCoins,
+          ),
+          const SizedBox(width: 6),
+          _CurrencyHud(
+            icon: Icons.diamond_rounded,
+            value: account?.wallet.gems ?? 50,
+            color: const Color(0xFF65E9FF),
+            onTap: onCoins,
+          ),
+          const SizedBox(width: 6),
+          _HudIcon(
+            icon: Icons.notifications_rounded,
+            badge: notifications,
+            onTap: onNotifications,
+          ),
+          const SizedBox(width: 4),
+          _HudIcon(icon: Icons.menu_rounded, onTap: onMore),
+        ],
+      ),
+    );
+  }
 }
 
-class _WalletPill extends StatelessWidget {
-  const _WalletPill({
+class _CurrencyHud extends StatelessWidget {
+  const _CurrencyHud({
     required this.icon,
     required this.value,
     required this.color,
@@ -728,258 +619,152 @@ class _WalletPill extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+          height: 34,
+          padding: const EdgeInsets.fromLTRB(4, 3, 7, 3),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
+            color: const Color(0xFF071B4A).withValues(alpha: 0.86),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withValues(alpha: 0.24)),
+            border: Border.all(color: Colors.white24),
           ),
           child: Row(
             children: [
-              Icon(icon, color: color, size: 15),
-              const SizedBox(width: 4),
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 6),
+                  ],
+                ),
+                child: Icon(icon, color: Colors.white, size: 16),
+              ),
+              const SizedBox(width: 5),
               Text(
                 value > 9999 ? '${(value / 1000).toStringAsFixed(1)}k' : '$value',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
+              const SizedBox(width: 3),
+              const Icon(Icons.add_circle, color: Color(0xFF56E978), size: 14),
             ],
           ),
         ),
       );
 }
 
-class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({required this.icon, required this.badge, required this.onTap});
+class _HudIcon extends StatelessWidget {
+  const _HudIcon({required this.icon, required this.onTap, this.badge = 0});
 
   final IconData icon;
-  final int badge;
   final VoidCallback onTap;
+  final int badge;
 
   @override
   Widget build(BuildContext context) => Badge(
         isLabelVisible: badge > 0,
         label: Text('$badge'),
-        child: IconButton.filledTonal(
-          onPressed: onTap,
-          icon: Icon(icon, size: 20),
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.surfaceCard,
-            foregroundColor: AppColors.textPrimary,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            width: 35,
+            height: 35,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2A62C0), Color(0xFF164492)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF72C9FF), width: 1.2),
+              boxShadow: const [
+                BoxShadow(color: Color(0x55000000), blurRadius: 5, offset: Offset(0, 3)),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 19),
           ),
         ),
       );
 }
 
-class _TabScroll extends StatelessWidget {
-  const _TabScroll({required this.children});
+class _GameIdentity extends StatelessWidget {
+  const _GameIdentity({required this.compact});
 
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) => ListView(
-        padding: const EdgeInsets.fromLTRB(18, 10, 18, 30),
-        children: children,
-      );
-}
-
-class _WelcomeCard extends StatelessWidget {
-  const _WelcomeCard({
-    required this.name,
-    required this.level,
-    required this.progress,
-    required this.onTap,
-  });
-
-  final String name;
-  final int level;
-  final double progress;
-  final VoidCallback onTap;
+  final bool compact;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-          ),
-          child: Row(
+  Widget build(BuildContext context) => Column(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'WELCOME BACK',
-                      style: TextStyle(
-                        color: AppColors.primaryLight,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        backgroundColor: AppColors.surfaceElevated,
-                        valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 18),
               Container(
-                width: 58,
-                height: 58,
-                alignment: Alignment.center,
+                width: compact ? 122 : 146,
+                height: compact ? 72 : 88,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.primaryDark],
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF53B5FF).withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.28),
-                      blurRadius: 22,
-                    ),
-                  ],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('LEVEL', style: TextStyle(color: Colors.white70, fontSize: 8)),
-                    Text(
-                      '$level',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
+              ),
+              Positioned(
+                top: compact ? -4 : -8,
+                child: Icon(
+                  Icons.workspace_premium_rounded,
+                  color: const Color(0xFFFFD447),
+                  size: compact ? 30 : 38,
+                  shadows: const [Shadow(color: Colors.black45, blurRadius: 6)],
                 ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: compact ? 14 : 18),
+                child: const AppLogo(size: 62),
               ),
             ],
           ),
-        ),
-      );
-}
-
-class _PrimaryPlayCard extends StatelessWidget {
-  const _PrimaryPlayCard({required this.onPlay, required this.onFriends});
-
-  final VoidCallback onPlay;
-  final VoidCallback onFriends;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6D4AFF), Color(0xFF3D2CA8), Color(0xFF183D7A)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.25),
-              blurRadius: 30,
-              offset: const Offset(0, 14),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                'QUICK MATCH',
+          Transform.translate(
+            offset: const Offset(0, -5),
+            child: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Color(0xFFFFD744), Color(0xFFFF8A1D)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ).createShader(bounds),
+              child: Text(
+                'LUDO MASTER',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
+                  fontSize: compact ? 24 : 29,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.4,
+                  shadows: const [
+                    Shadow(color: Color(0xFF7B2E00), offset: Offset(0, 3), blurRadius: 1),
+                    Shadow(color: Colors.black54, offset: Offset(0, 5), blurRadius: 7),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            const Text(
-              'Ready for a match?',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 27,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Find players instantly or invite your crew.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: onPlay,
-                    icon: const Icon(Icons.flash_on_rounded),
-                    label: const Text('PLAY NOW'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF4B34C4),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                IconButton.filled(
-                  onPressed: onFriends,
-                  tooltip: 'Play with friends',
-                  icon: const Icon(Icons.group_add_rounded),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.14),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.all(13),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       );
 }
 
-class _ResumeCard extends StatelessWidget {
-  const _ResumeCard({required this.playerCount, required this.turn, required this.onTap});
+class _ContinueRibbon extends StatelessWidget {
+  const _ContinueRibbon({
+    required this.playerCount,
+    required this.turn,
+    required this.onTap,
+  });
 
   final int playerCount;
   final int turn;
@@ -988,359 +773,633 @@ class _ResumeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.mint.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.mint.withValues(alpha: 0.28)),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0CBF76), Color(0xFF087E51)],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF7FFFC6), width: 1.3),
+            boxShadow: const [
+              BoxShadow(color: Color(0x66000000), blurRadius: 7, offset: Offset(0, 4)),
+            ],
           ),
           child: Row(
             children: [
-              const Icon(Icons.play_circle_fill_rounded, color: AppColors.mint, size: 36),
-              const SizedBox(width: 12),
+              const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 28),
+              const SizedBox(width: 9),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Continue your game',
-                      style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800),
+                      'CONTINUE GAME',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     Text(
                       '$playerCount players • turn $turn',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: const TextStyle(color: Colors.white70, fontSize: 10),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_rounded, color: AppColors.mint),
+              const Icon(Icons.chevron_right_rounded, color: Colors.white),
             ],
           ),
         ),
       );
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, required this.subtitle});
+class _ModeGrid extends StatelessWidget {
+  const _ModeGrid({
+    required this.compact,
+    required this.pulse,
+    required this.onOnline,
+    required this.onFriends,
+    required this.onComputer,
+    required this.onLocal,
+  });
 
-  final String title;
-  final String subtitle;
+  final bool compact;
+  final Animation<double> pulse;
+  final VoidCallback onOnline;
+  final VoidCallback onFriends;
+  final VoidCallback onComputer;
+  final VoidCallback onLocal;
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(subtitle, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-        ],
-      );
-}
-
-class _MiniActionCard extends StatelessWidget {
-  const _MiniActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.onTap,
-    this.badge,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 154,
-        margin: const EdgeInsets.only(right: 10),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceCard.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withValues(alpha: 0.18)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(icon, color: color, size: 24),
-                    const Spacer(),
-                    if (badge != null)
-                      Text(
-                        badge!,
-                        style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900),
-                      ),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-}
-
-class _PageHeading extends StatelessWidget {
-  const _PageHeading({required this.eyebrow, required this.title, required this.subtitle});
-
-  final String eyebrow;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            eyebrow,
-            style: const TextStyle(
-              color: AppColors.primaryLight,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              height: 1.05,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
-          ),
-        ],
-      );
-}
-
-class _FeatureTile extends StatelessWidget {
-  const _FeatureTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.onTap,
-    this.badge,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color.withValues(alpha: 0.20), AppColors.surfaceCard],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: color.withValues(alpha: 0.25)),
-          ),
-          child: Row(
+          Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        if (badge != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.16),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              badge!,
-                              style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  ],
+                child: AnimatedBuilder(
+                  animation: pulse,
+                  builder: (context, child) => Transform.scale(
+                    scale: 1 + pulse.value * 0.008,
+                    child: child,
+                  ),
+                  child: _GameModeButton(
+                    key: const Key('mode-online'),
+                    height: compact ? 112 : 132,
+                    title: 'ONLINE',
+                    subtitle: 'Quick Match',
+                    icon: Icons.public_rounded,
+                    topColor: const Color(0xFF55E36E),
+                    bottomColor: const Color(0xFF12A84E),
+                    badge: 'LIVE',
+                    onTap: onOnline,
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textMuted, size: 16),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _GameModeButton(
+                  key: const Key('mode-friends'),
+                  height: compact ? 112 : 132,
+                  title: 'FRIENDS',
+                  subtitle: 'Play Together',
+                  icon: Icons.group_rounded,
+                  topColor: const Color(0xFFFF765E),
+                  bottomColor: const Color(0xFFE53D42),
+                  onTap: onFriends,
+                ),
+              ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _GameModeButton(
+                  key: const Key('mode-computer'),
+                  height: compact ? 100 : 118,
+                  title: 'VS COMPUTER',
+                  subtitle: 'Offline Practice',
+                  icon: Icons.smart_toy_rounded,
+                  topColor: const Color(0xFF61B9FF),
+                  bottomColor: const Color(0xFF2571D8),
+                  onTap: onComputer,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _GameModeButton(
+                  key: const Key('mode-local'),
+                  height: compact ? 100 : 118,
+                  title: 'PASS & PLAY',
+                  subtitle: 'Local Multiplayer',
+                  icon: Icons.people_alt_rounded,
+                  topColor: const Color(0xFFFFD34D),
+                  bottomColor: const Color(0xFFF29B17),
+                  darkText: true,
+                  onTap: onLocal,
+                ),
+              ),
+            ],
+          ),
+        ],
       );
 }
 
-class _SquareModeCard extends StatelessWidget {
-  const _SquareModeCard({
-    required this.icon,
+class _GameModeButton extends StatelessWidget {
+  const _GameModeButton({
+    super.key,
+    required this.height,
     required this.title,
     required this.subtitle,
-    required this.color,
+    required this.icon,
+    required this.topColor,
+    required this.bottomColor,
     required this.onTap,
+    this.badge,
+    this.darkText = false,
   });
 
-  final IconData icon;
+  final double height;
   final String title;
   final String subtitle;
-  final Color color;
+  final IconData icon;
+  final Color topColor;
+  final Color bottomColor;
   final VoidCallback onTap;
+  final String? badge;
+  final bool darkText;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          height: 150,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceCard.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withValues(alpha: 0.20)),
+  Widget build(BuildContext context) {
+    final textColor = darkText ? const Color(0xFF5B3500) : Colors.white;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [topColor, bottomColor],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.78), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: bottomColor.withValues(alpha: 0.72),
+              offset: const Offset(0, 7),
+              blurRadius: 0,
+            ),
+            const BoxShadow(
+              color: Color(0x66000000),
+              offset: Offset(0, 10),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              top: 7,
+              left: 9,
+              right: 9,
+              child: Container(
+                height: 2,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: color, size: 25),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
+                  color: Colors.white.withValues(alpha: 0.46),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+            ),
+            if (badge != null)
+              Positioned(
+                top: -7,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE82136),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.2),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
               ),
-            ],
-          ),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.19),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white38),
+                    ),
+                    child: Icon(icon, color: textColor, size: 29),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .5,
+                      shadows: darkText
+                          ? null
+                          : const [Shadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 2)],
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: textColor.withValues(alpha: 0.84),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EventRail extends StatelessWidget {
+  const _EventRail({
+    required this.canClaimReward,
+    required this.inviteCount,
+    required this.onReward,
+    required this.onTournament,
+    required this.onSeason,
+    required this.onFriends,
+  });
+
+  final bool canClaimReward;
+  final int inviteCount;
+  final VoidCallback onReward;
+  final VoidCallback onTournament;
+  final VoidCallback onSeason;
+  final VoidCallback onFriends;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 72,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          children: [
+            _EventBadge(
+              icon: Icons.card_giftcard_rounded,
+              label: 'DAILY',
+              color: const Color(0xFFFFC532),
+              marker: canClaimReward ? 'FREE' : null,
+              onTap: onReward,
+            ),
+            _EventBadge(
+              icon: Icons.emoji_events_rounded,
+              label: 'CUP',
+              color: const Color(0xFFFF7D45),
+              marker: '8P',
+              onTap: onTournament,
+            ),
+            _EventBadge(
+              icon: Icons.workspace_premium_rounded,
+              label: 'SEASON',
+              color: const Color(0xFFB771FF),
+              onTap: onSeason,
+            ),
+            _EventBadge(
+              icon: Icons.mail_rounded,
+              label: 'INVITES',
+              color: const Color(0xFF48D9BE),
+              marker: inviteCount > 0 ? '$inviteCount' : null,
+              onTap: onFriends,
+            ),
+          ],
         ),
       );
 }
 
-class _ListAction extends StatelessWidget {
-  const _ListAction({
+class _EventBadge extends StatelessWidget {
+  const _EventBadge({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.color,
     required this.onTap,
+    this.marker,
   });
 
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
   final Color color;
   final VoidCallback onTap;
+  final String? marker;
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: ListTile(
+        padding: const EdgeInsets.only(right: 10),
+        child: InkWell(
           onTap: onTap,
-          tileColor: AppColors.surfaceCard.withValues(alpha: 0.85),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.13),
-              borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 78,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF173E8A), Color(0xFF0A285F)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: color.withValues(alpha: 0.72), width: 1.4),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x55000000), blurRadius: 6, offset: Offset(0, 4)),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, color: color, size: 28),
+                    const SizedBox(height: 3),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (marker != null)
+                Positioned(
+                  right: -3,
+                  top: -5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE83245),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white),
+                    ),
+                    child: Text(
+                      marker!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 7,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _UtilityDock extends StatelessWidget {
+  const _UtilityDock({
+    required this.onStore,
+    required this.onLeaderboard,
+    required this.onRoom,
+    required this.onClub,
+    required this.onMore,
+  });
+
+  final VoidCallback onStore;
+  final VoidCallback onLeaderboard;
+  final VoidCallback onRoom;
+  final VoidCallback onClub;
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFF06173E).withValues(alpha: 0.86),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFF3C72BC)),
+          boxShadow: const [
+            BoxShadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 5)),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _DockButton(icon: Icons.storefront_rounded, label: 'SHOP', onTap: onStore),
+            _DockButton(icon: Icons.leaderboard_rounded, label: 'RANK', onTap: onLeaderboard),
+            _DockButton(icon: Icons.key_rounded, label: 'ROOM', onTap: onRoom),
+            _DockButton(icon: Icons.shield_rounded, label: 'CLUB', onTap: onClub),
+            _DockButton(icon: Icons.grid_view_rounded, label: 'MORE', onTap: onMore),
+          ],
+        ),
+      );
+}
+
+class _DockButton extends StatelessWidget {
+  const _DockButton({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: const Color(0xFF9ED4FF), size: 22),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _GameMenuSheet extends StatelessWidget {
+  const _GameMenuSheet({
+    required this.roomInvites,
+    required this.onTabbedHome,
+    required this.onMissions,
+    required this.onAchievements,
+    required this.onSeason,
+    required this.onTournament,
+    required this.onLeaderboard,
+    required this.onFriends,
+    required this.onClubs,
+    required this.onHistory,
+    required this.onRewardPack,
+  });
+
+  final int roomInvites;
+  final VoidCallback onTabbedHome;
+  final VoidCallback onMissions;
+  final VoidCallback onAchievements;
+  final VoidCallback onSeason;
+  final VoidCallback onTournament;
+  final VoidCallback onLeaderboard;
+  final VoidCallback onFriends;
+  final VoidCallback onClubs;
+  final VoidCallback onHistory;
+  final VoidCallback onRewardPack;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(10),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF12347B), Color(0xFF071C4B)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-            child: Icon(icon, color: color),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: const Color(0xFF68B8FF), width: 1.4),
+            boxShadow: const [
+              BoxShadow(color: Color(0x88000000), blurRadius: 18, offset: Offset(0, 8)),
+            ],
           ),
-          title: Text(
-            title,
-            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.casino_rounded, color: Color(0xFFFFC928)),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'GAME MENU',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              TextButton.icon(
+                onPressed: onTabbedHome,
+                icon: const Icon(Icons.dashboard_rounded),
+                label: const Text('Tabbed home'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+              ),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.12,
+                children: [
+                  _MenuTile(icon: Icons.flag_rounded, label: 'Missions', onTap: onMissions),
+                  _MenuTile(icon: Icons.emoji_events_rounded, label: 'Badges', onTap: onAchievements),
+                  _MenuTile(icon: Icons.workspace_premium_rounded, label: 'Season', onTap: onSeason),
+                  _MenuTile(icon: Icons.account_tree_rounded, label: 'Cup', onTap: onTournament),
+                  _MenuTile(icon: Icons.leaderboard_rounded, label: 'Ranking', onTap: onLeaderboard),
+                  _MenuTile(
+                    icon: Icons.people_alt_rounded,
+                    label: roomInvites > 0 ? 'Friends ($roomInvites)' : 'Friends',
+                    onTap: onFriends,
+                  ),
+                  _MenuTile(icon: Icons.shield_rounded, label: 'Clubs', onTap: onClubs),
+                  _MenuTile(icon: Icons.history_rounded, label: 'History', onTap: onHistory),
+                  _MenuTile(icon: Icons.play_circle_fill_rounded, label: 'Free Coins', onTap: onRewardPack),
+                ],
+              ),
+            ],
           ),
-          subtitle: Text(
-            subtitle,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+        ),
+      );
+}
+
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF255FB8), Color(0xFF123E88)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white24),
           ),
-          trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: const Color(0xFFFFD34D), size: 28),
+              const SizedBox(height: 5),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
 }

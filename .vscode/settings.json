@@ -1,0 +1,16 @@
+{
+  "python.analysis.exclude": [
+    "**/.chrome-ui-review/**",
+    "**/.chrome-ui-review-cdp/**",
+    "**/.github/**",
+    "**/.dart_tool/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/venv/**",
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+    "apps/mobile/ios/Flutter/ephemeral/**"
+  ]
+}

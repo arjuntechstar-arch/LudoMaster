@@ -5,6 +5,7 @@ import '../screens/privacy_policy_screen.dart';
 import '../theme/app_colors.dart';
 import 'google_account_buttons.dart';
 import 'profile_avatar.dart';
+import 'mobile_ui.dart';
 
 /// Modal dialog providing user Sign In, Sign Up, and welcoming the player by display name.
 class AuthDialog extends StatefulWidget {
@@ -182,38 +183,8 @@ class _AuthDialogState extends State<AuthDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 420),
-        decoration: BoxDecoration(
-          color: const Color(0xFF131A2E),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppColors.gold.withValues(alpha: 0.5),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.6),
-              blurRadius: 28,
-              offset: const Offset(0, 10),
-            ),
-            BoxShadow(
-              color: AppColors.gold.withValues(alpha: 0.15),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
-          child: _successPlayerId != null
-              ? _buildSuccessView()
-              : _buildFormView(),
-        ),
-      ),
+    return MobileDialog(
+      child: _successPlayerId != null ? _buildSuccessView() : _buildFormView(),
     );
   }
 
@@ -295,20 +266,24 @@ class _AuthDialogState extends State<AuthDialog> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.casino, color: AppColors.gold, size: 28),
-                const SizedBox(width: 8),
-                Text(
-                  _isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    letterSpacing: 0.8,
+            Expanded(
+              child: Row(
+                children: [
+                  const Icon(Icons.casino, color: AppColors.gold, size: 28),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      _isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.close, color: Colors.white60),

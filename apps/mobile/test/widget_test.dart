@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/main.dart';
@@ -10,36 +11,46 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('App smoke test: ModernHomeScreen loads and navigates to SetupScreen', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: LudoMasterApp(),
-      ),
-    );
+  testWidgets(
+    'Mobile lobby keeps navigation accessible and opens offline setup',
+    (tester) async {
+      await tester.pumpWidget(const ProviderScope(child: LudoMasterApp()));
 
-    await tester.pumpAndSettle();
+      for (
+        var i = 0;
+        i < 20 && find.byKey(const Key('mode-computer')).evaluate().isEmpty;
+        i++
+      ) {
+        await tester.pump(const Duration(milliseconds: 500));
+      }
 
-    // Verify the redesigned home shell and bottom navigation are visible.
-    expect(find.text('For you'), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Play'), findsOneWidget);
-    expect(find.text('Progress'), findsOneWidget);
-    expect(find.text('Social'), findsOneWidget);
+      expect(find.text('Ready to roll?'), findsOneWidget);
+      expect(find.text('Play online'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.text('Social').hitTestable(), findsOneWidget);
 
-    // Open the dedicated Play tab introduced by the modern home redesign.
-    await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
+      final computerMode = find.byKey(const Key('mode-computer'));
+      await tester.scrollUntilVisible(
+        computerMode,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
+      expect(find.text('Vs Computer'), findsOneWidget);
+      expect(find.text('Pass & Play'), findsOneWidget);
+      expect(computerMode, findsOneWidget);
+      await tester.ensureVisible(computerMode);
+      await tester.pump();
+      await tester.tap(computerMode);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('How do you want to play?'), findsOneWidget);
-    expect(find.text('Vs Computer'), findsOneWidget);
-    expect(find.text('Pass & Play'), findsOneWidget);
+      expect(find.text('VS COMPUTER'), findsOneWidget);
+      expect(find.text('START MATCH'), findsOneWidget);
+      expect(find.text('4 Players'), findsOneWidget);
 
-    // Navigate to the existing setup flow from the redesigned Play tab.
-    await tester.tap(find.text('Vs Computer'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('VS COMPUTER'), findsOneWidget);
-    expect(find.text('START MATCH'), findsOneWidget);
-    expect(find.text('4 Players'), findsOneWidget);
-  });
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
 }

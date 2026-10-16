@@ -6,6 +6,7 @@ import 'src/screens/error_boundary_widget.dart';
 import 'src/screens/startup_screen.dart';
 import 'src/services/crash_reporting_service.dart';
 import 'src/theme/app_theme.dart';
+import 'src/widgets/mobile_ui.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,13 +31,15 @@ class LudoMasterApp extends ConsumerWidget {
       theme: theme,
       builder: (context, child) {
         if (settings.largeText) {
-          return MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: const TextScaler.linear(1.15)),
-            child: child ?? const SizedBox.shrink(),
+          return MobileAppFrame(
+            child: MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(1.15)),
+              child: child ?? const SizedBox.shrink(),
+            ),
           );
         }
-        return child ?? const SizedBox.shrink();
+        return MobileAppFrame(child: child ?? const SizedBox.shrink());
       },
       home: const ErrorBoundaryWidget(child: StartupScreen()),
     );

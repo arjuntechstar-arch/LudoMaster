@@ -241,16 +241,12 @@ class OnlineMatchController extends StateNotifier<OnlineMatchState> {
 
       case 'DICE_ROLLED':
         final val = payload['value'] as int?;
-        final rollerSeat = payload['seatIndex'] as int?;
         _stopCountdown();
         _requestTimer?.cancel();
         state = state.copyWith(
           diceValue: val,
-          // The shared board shows every result, but only animate this
-          // player's die for their own roll.
-          rollSequence: rollerSeat == state.mySeatIndex
-              ? state.rollSequence + 1
-              : state.rollSequence,
+          // Every authoritative roll animates on the shared table.
+          rollSequence: state.rollSequence + 1,
           isAnimating: true,
           requestPending: false,
           legalMoves: [],
@@ -451,9 +447,7 @@ class OnlineMatchController extends StateNotifier<OnlineMatchState> {
 
   void _scheduleAutoMove() {
     _autoMoveTimer?.cancel();
-    if (!state.isMyTurn ||
-        state.phase != 'MOVE_REQUIRED' ||
-        state.legalMoves.length != 1) {
+    if (!_canAutoMove()) {
       return;
     }
     final sequence = state.rollSequence;
@@ -465,10 +459,39 @@ class OnlineMatchController extends StateNotifier<OnlineMatchState> {
           generation == _generation &&
           state.rollSequence == sequence &&
           state.currentSeatIndex == seat &&
+          _canAutoMove() &&
+          _tokenId(state.legalMoves.single['tokenId']) == token &&
           token != null) {
         moveToken(token);
       }
     });
+  }
+
+  bool _canAutoMove() {
+    if (!state.isMyTurn ||
+        state.phase != 'MOVE_REQUIRED' ||
+        state.isAnimating ||
+        state.requestPending ||
+        state.legalMoves.length != 1) {
+      return false;
+    }
+    final seat = state.seats
+        .where((seat) => seat['seatIndex'] == state.currentSeatIndex)
+        .firstOrNull;
+    final tokens = seat?['tokens'];
+    // Without a complete token snapshot, leave the decision to the player.
+    if (tokens is! List || tokens.isEmpty) return false;
+    final candidates = tokens
+        .where(
+          (token) =>
+              token['location'] == 'TRACK' ||
+              token['location'] == 'HOME_LANE' ||
+              (token['location'] == 'YARD' && state.diceValue == 6),
+        )
+        .toList();
+    return candidates.length == 1 &&
+        _tokenId(candidates.single['id']) ==
+            _tokenId(state.legalMoves.single['tokenId']);
   }
 
   int? _tokenId(dynamic raw) =>

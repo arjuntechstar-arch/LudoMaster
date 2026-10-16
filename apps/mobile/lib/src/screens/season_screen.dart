@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_client.dart';
 import '../theme/app_colors.dart';
 
@@ -27,17 +28,21 @@ class _SeasonScreenState extends State<SeasonScreen> {
       if (!mounted) return;
       await _loadSeason();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Royal Pass unlocked for this season!'),
-          backgroundColor: AppColors.green,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Royal Pass unlocked for this season!'),
+            backgroundColor: AppColors.green,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not unlock Royal Pass: $e'),
-          backgroundColor: AppColors.red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not unlock Royal Pass: $e'),
+            backgroundColor: AppColors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isUnlocking = false);
@@ -76,7 +81,10 @@ class _SeasonScreenState extends State<SeasonScreen> {
   Future<void> _claimReward(int tierNumber, {required bool isPremium}) async {
     setState(() => _claimingTier = tierNumber);
     try {
-      final res = await _apiClient.claimSeasonReward(tierNumber, isPremium: isPremium);
+      final res = await _apiClient.claimSeasonReward(
+        tierNumber,
+        isPremium: isPremium,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -111,9 +119,11 @@ class _SeasonScreenState extends State<SeasonScreen> {
           children: [
             Icon(Icons.military_tech, color: AppColors.gold),
             SizedBox(width: 8),
-            Text(
-              'Season Pass',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Flexible(
+              child: Text(
+                'Season Pass',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ),
           ],
         ),
@@ -125,10 +135,12 @@ class _SeasonScreenState extends State<SeasonScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            )
           : _errorMessage != null
-              ? _buildErrorView()
-              : _buildContent(),
+          ? _buildErrorView()
+          : _buildContent(),
     );
   }
 
@@ -214,15 +226,22 @@ class _SeasonScreenState extends State<SeasonScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.purple.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.purpleLight.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: AppColors.purpleLight.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Text(
                   season.themeName.toUpperCase(),
@@ -234,7 +253,10 @@ class _SeasonScreenState extends State<SeasonScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.green.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
@@ -274,6 +296,7 @@ class _SeasonScreenState extends State<SeasonScreen> {
   Widget _buildPassStatusBanner(SeasonDetailModel season) {
     if (season.hasPremiumPass) {
       return Container(
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -281,7 +304,10 @@ class _SeasonScreenState extends State<SeasonScreen> {
           ),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: const Row(
+        child: const Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 2,
+          runSpacing: 4,
           children: [
             Icon(Icons.star, color: Colors.black, size: 20),
             SizedBox(width: 8),
@@ -301,46 +327,58 @@ class _SeasonScreenState extends State<SeasonScreen> {
     return InkWell(
       onTap: _isUnlocking ? null : _unlockPass,
       child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.workspace_premium, color: AppColors.gold, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Free Pass Active',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
+        ),
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            const Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 2,
+              runSpacing: 4,
+              children: [
+                Icon(Icons.workspace_premium, color: AppColors.gold, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Free Pass Active',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Text(
-            _isUnlocking ? 'Unlocking...' : 'Unlock for ${season.premiumPassCostGems} Gems',
-            style: const TextStyle(
-              color: AppColors.goldLight,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
+              ],
             ),
-          ),
-        ],
-      ),
+            Text(
+              _isUnlocking
+                  ? 'Unlocking...'
+                  : 'Unlock for ${season.premiumPassCostGems} Gems',
+              style: const TextStyle(
+                color: AppColors.goldLight,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProgressCard(SeasonDetailModel season) {
-    final nextTier = season.tiers.where((t) => t.xpRequired > season.currentXp).firstOrNull;
-    final maxTierXp = nextTier?.xpRequired ?? (season.tiers.isNotEmpty ? season.tiers.last.xpRequired : 100);
+    final nextTier = season.tiers
+        .where((t) => t.xpRequired > season.currentXp)
+        .firstOrNull;
+    final maxTierXp =
+        nextTier?.xpRequired ??
+        (season.tiers.isNotEmpty ? season.tiers.last.xpRequired : 100);
     final progressRatio = (season.currentXp / maxTierXp).clamp(0.0, 1.0);
 
     return Container(
@@ -353,13 +391,21 @@ class _SeasonScreenState extends State<SeasonScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 2,
+                runSpacing: 4,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.gold,
                       borderRadius: BorderRadius.circular(8),
@@ -383,7 +429,10 @@ class _SeasonScreenState extends State<SeasonScreen> {
               if (nextTier != null)
                 Text(
                   'Next Tier: ${nextTier.xpRequired} XP',
-                  style: const TextStyle(color: AppColors.goldLight, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppColors.goldLight,
+                    fontSize: 12,
+                  ),
                 ),
             ],
           ),
@@ -423,14 +472,21 @@ class _SeasonScreenState extends State<SeasonScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Tier Number & Status
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 2,
+                runSpacing: 4,
                 children: [
                   CircleAvatar(
                     radius: 14,
-                    backgroundColor: tier.isUnlocked ? AppColors.gold : Colors.white12,
+                    backgroundColor: tier.isUnlocked
+                        ? AppColors.gold
+                        : Colors.white12,
                     child: Text(
                       '${tier.tierNumber}',
                       style: TextStyle(
@@ -451,18 +507,25 @@ class _SeasonScreenState extends State<SeasonScreen> {
                   ),
                 ],
               ),
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 2,
+                runSpacing: 4,
                 children: [
                   Icon(
                     tier.isUnlocked ? Icons.lock_open : Icons.lock,
                     size: 14,
-                    color: tier.isUnlocked ? AppColors.greenLight : AppColors.textMuted,
+                    color: tier.isUnlocked
+                        ? AppColors.greenLight
+                        : AppColors.textMuted,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${tier.xpRequired} XP',
                     style: TextStyle(
-                      color: tier.isUnlocked ? AppColors.greenLight : AppColors.textMuted,
+                      color: tier.isUnlocked
+                          ? AppColors.greenLight
+                          : AppColors.textMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -497,7 +560,10 @@ class _SeasonScreenState extends State<SeasonScreen> {
             itemName: tier.premiumRewardItemName,
             isUnlocked: tier.isUnlocked && season.hasPremiumPass,
             isClaimed: tier.isPremiumClaimed,
-            canClaim: tier.isUnlocked && season.hasPremiumPass && !tier.isPremiumClaimed,
+            canClaim:
+                tier.isUnlocked &&
+                season.hasPremiumPass &&
+                !tier.isPremiumClaimed,
             isClaiming: isClaiming,
             onClaim: () => _claimReward(tier.tierNumber, isPremium: true),
             requiresPass: !season.hasPremiumPass,
@@ -520,10 +586,15 @@ class _SeasonScreenState extends State<SeasonScreen> {
     required VoidCallback onClaim,
     bool requiresPass = false,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        Row(
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 2,
+          runSpacing: 4,
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -589,7 +660,10 @@ class _SeasonScreenState extends State<SeasonScreen> {
               color: AppColors.green.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Row(
+            child: const Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 2,
+              runSpacing: 4,
               children: [
                 Icon(Icons.check, size: 12, color: AppColors.greenLight),
                 SizedBox(width: 4),
@@ -612,13 +686,18 @@ class _SeasonScreenState extends State<SeasonScreen> {
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               minimumSize: const Size(60, 28),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             child: isClaiming
                 ? const SizedBox(
                     width: 12,
                     height: 12,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.black,
+                    ),
                   )
                 : const Text(
                     'CLAIM',
@@ -644,7 +723,10 @@ class _SeasonScreenState extends State<SeasonScreen> {
               color: Colors.white10,
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Row(
+            child: const Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 2,
+              runSpacing: 4,
               children: [
                 Icon(Icons.lock, size: 10, color: Colors.white38),
                 SizedBox(width: 4),

@@ -43,6 +43,52 @@ class TestRealtimeClient extends RealtimeClient {
 }
 
 void main() {
+  for (final secondLocation in ['TRACK', 'HOME_LANE']) {
+    testWidgets('online auto move waits with another $secondLocation token', (
+      tester,
+    ) async {
+      final client = TestRealtimeClient();
+      final controller = OnlineMatchController(client: client);
+      addTearDown(() {
+        if (controller.mounted) controller.dispose();
+      });
+      client.emit('AUTHENTICATED', {'seatIndex': 0});
+      client.emit('STATE_SNAPSHOT', {
+        'currentSeatIndex': 0,
+        'phase': 'ROLL_REQUIRED',
+        'seats': [
+          {
+            'seatIndex': 0,
+            'tokens': [
+              {'id': 0, 'location': 'TRACK', 'position': 8, 'stepsTaken': 8},
+              {
+                'id': 1,
+                'location': secondLocation,
+                'position': 4,
+                'stepsTaken': 55,
+              },
+            ],
+          },
+        ],
+      });
+      client.emit('DICE_ROLLED', {'seatIndex': 0, 'value': 2});
+      client.emit('LEGAL_MOVES', {
+        'moves': [
+          {'tokenId': 0, 'fromLocation': 'TRACK'},
+        ],
+      });
+      await tester.pump();
+      await tester.pump(GamePacing.diceRoll);
+      await tester.pump(
+        GamePacing.autoMovePause + const Duration(milliseconds: 100),
+      );
+      expect(client.moves, isEmpty);
+      expect(controller.currentState.phase, 'MOVE_REQUIRED');
+      controller.moveToken(0);
+      expect(client.moves, [0]);
+      controller.dispose();
+    });
+  }
   testWidgets('dice tap cannot roll while its owner is waiting', (
     tester,
   ) async {
@@ -111,7 +157,7 @@ void main() {
     expect(find.byKey(const ValueKey('moving-token')), findsOneWidget);
   });
 
-  testWidgets('opponent roll is shown without animating or enabling my die', (
+  testWidgets('opponent roll advances animation without enabling my die', (
     tester,
   ) async {
     final client = TestRealtimeClient();
@@ -130,12 +176,17 @@ void main() {
 
     expect(controller.currentState.isMyTurn, isFalse);
     expect(controller.currentState.isAnimating, isTrue);
-    expect(controller.currentState.rollSequence, 0);
+    expect(controller.currentState.rollSequence, 1);
     controller.rollDice();
     expect(client.rollRequests, 0);
 
     await tester.pump(GamePacing.diceRoll);
     expect(controller.currentState.isAnimating, isFalse);
+    client.emit('DICE_ROLLED', {'seatIndex': 1, 'value': 4});
+    await tester.pump();
+    expect(controller.currentState.rollSequence, 2);
+    expect(controller.currentState.isMyTurn, isFalse);
+    await tester.pump(GamePacing.diceRoll);
     controller.dispose();
   });
 

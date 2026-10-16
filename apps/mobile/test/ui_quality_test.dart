@@ -14,6 +14,8 @@ void main() {
   });
 
   final sizes = <Size>[
+    const Size(320, 568),
+    const Size(844, 390),
     const Size(360, 640),
     const Size(360, 800),
     const Size(390, 844),
@@ -23,69 +25,77 @@ void main() {
   ];
 
   for (final size in sizes) {
-    testWidgets('game screen renders without overflow at ${size.width}x${size.height}', (
-      tester,
-    ) async {
-      tester.view.physicalSize = size;
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'game screen renders without overflow at ${size.width}x${size.height}',
+      (tester) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      final controller = GameController();
-      controller.startNewGame(
-        players: const [
-          PlayerState(
-            id: 'human_red',
-            name: 'You',
-            seat: 0,
-            color: PlayerColor.red,
-            tokens: [],
-          ),
-          PlayerState(
-            id: 'bot_green',
-            name: 'Bot Green',
-            seat: 1,
-            color: PlayerColor.green,
-            isBot: true,
-            tokens: [],
-          ),
-          PlayerState(
-            id: 'bot_yellow',
-            name: 'Bot Yellow',
-            seat: 2,
-            color: PlayerColor.yellow,
-            isBot: true,
-            tokens: [],
-          ),
-          PlayerState(
-            id: 'bot_blue',
-            name: 'Bot Blue',
-            seat: 3,
-            color: PlayerColor.blue,
-            isBot: true,
-            tokens: [],
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gameControllerProvider.overrideWith((ref) => controller),
+        final controller = GameController();
+        controller.startNewGame(
+          players: const [
+            PlayerState(
+              id: 'human_red',
+              name: 'You',
+              seat: 0,
+              color: PlayerColor.red,
+              tokens: [],
+            ),
+            PlayerState(
+              id: 'bot_green',
+              name: 'Bot Green',
+              seat: 1,
+              color: PlayerColor.green,
+              isBot: true,
+              tokens: [],
+            ),
+            PlayerState(
+              id: 'bot_yellow',
+              name: 'Bot Yellow',
+              seat: 2,
+              color: PlayerColor.yellow,
+              isBot: true,
+              tokens: [],
+            ),
+            PlayerState(
+              id: 'bot_blue',
+              name: 'Bot Blue',
+              seat: 3,
+              color: PlayerColor.blue,
+              isBot: true,
+              tokens: [],
+            ),
           ],
-          child: const MaterialApp(home: GameScreen()),
-        ),
-      );
-      await tester.pump();
+        );
 
-      expect(find.byType(GameScreen), findsOneWidget);
-      expect(tester.takeException(), isNull);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              gameControllerProvider.overrideWith((ref) => controller),
+            ],
+            child: MaterialApp(
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: const TextScaler.linear(1.3)),
+                child: child!,
+              ),
+              home: const GameScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
 
-      // Let ProviderScope own and dispose the overridden StateNotifier exactly once.
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump();
-    });
+        expect(find.byType(GameScreen), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        // Let ProviderScope own and dispose the overridden StateNotifier exactly once.
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      },
+    );
   }
 }

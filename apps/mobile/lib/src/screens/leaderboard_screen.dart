@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_client.dart';
 import '../theme/app_colors.dart';
 
@@ -52,7 +53,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
     final currentScope = _scopes[_tabController.index];
     try {
-      final lbFuture = _apiClient.getLeaderboard(scope: currentScope, limit: 50);
+      final lbFuture = _apiClient.getLeaderboard(
+        scope: currentScope,
+        limit: 50,
+      );
       final rankFuture = _apiClient.getMyLeaderboardRank(scope: currentScope);
 
       final results = await Future.wait([lbFuture, rankFuture]);
@@ -83,9 +87,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           children: [
             Icon(Icons.leaderboard, color: AppColors.gold),
             SizedBox(width: 8),
-            Text(
-              'Hall of Fame',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Flexible(
+              child: Text(
+                'Hall of Fame',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ),
           ],
         ),
@@ -95,7 +101,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           indicatorWeight: 3,
           labelColor: AppColors.gold,
           unselectedLabelColor: AppColors.textSecondary,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
           tabs: _scopeLabels.map((l) => Tab(text: l)).toList(),
         ),
         actions: [
@@ -106,10 +115,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            )
           : _errorMessage != null
-              ? _buildErrorView()
-              : _buildContent(),
+          ? _buildErrorView()
+          : _buildContent(),
       bottomNavigationBar: _myRank != null ? _buildMyRankBottomBar() : null,
     );
   }
@@ -147,7 +158,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.emoji_events_outlined, size: 64, color: AppColors.textMuted),
+            const Icon(
+              Icons.emoji_events_outlined,
+              size: 64,
+              color: AppColors.textMuted,
+            ),
             const SizedBox(height: 12),
             const Text(
               'No rankings recorded yet for this period.',
@@ -157,7 +172,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             ElevatedButton(
               onPressed: _loadLeaderboard,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold),
-              child: const Text('Refresh', style: TextStyle(color: Colors.black)),
+              child: const Text(
+                'Refresh',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
           ],
         ),
@@ -195,13 +213,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               ),
             ),
             SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final entry = remaining[index];
-                  return _buildLeaderboardRow(entry);
-                },
-                childCount: remaining.length,
-              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final entry = remaining[index];
+                return _buildLeaderboardRow(entry);
+              }, childCount: remaining.length),
             ),
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -377,7 +392,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               ),
               Text(
                 'Lv.${entry.level}',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 10,
+                ),
               ),
             ],
           ),
@@ -441,21 +459,30 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                     ),
                     const SizedBox(width: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white12,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'Lv.${entry.level}',
-                        style: const TextStyle(color: AppColors.goldLight, fontSize: 9),
+                        style: const TextStyle(
+                          color: AppColors.goldLight,
+                          fontSize: 9,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 Text(
                   '${entry.matchesWon} wins • ${entry.winRate}% win rate',
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -489,7 +516,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.gold, width: 1.5)),
+        border: const Border(
+          top: BorderSide(color: AppColors.gold, width: 1.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
@@ -532,7 +561,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   ),
                   Text(
                     '${rank.matchesWon} wins / ${rank.matchesPlayed} matches',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -551,7 +583,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 ),
                 Text(
                   rank.scope,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),

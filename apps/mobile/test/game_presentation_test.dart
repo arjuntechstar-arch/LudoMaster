@@ -39,6 +39,112 @@ const players = [
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  GameState twoTokens({bool nearHome = false}) {
+    final game = LudoEngine.initializeGame(
+      matchId: 'two-tokens',
+      players: players,
+      ruleset: RulesetConfig.classic,
+    ).state;
+    final red = game.currentPlayer;
+    return game.copyWith(
+      players: [
+        red.copyWith(
+          tokens: [
+            red.tokens[0].copyWith(
+              state: TokenState.track,
+              trackCell: 8,
+              stepCount: 8,
+            ),
+            nearHome
+                ? red.tokens[1].copyWith(
+                    state: TokenState.homeLane,
+                    laneStep: 5,
+                    clearTrackCell: true,
+                  )
+                : red.tokens[1].copyWith(
+                    state: TokenState.track,
+                    trackCell: 13,
+                    stepCount: 13,
+                  ),
+            ...red.tokens.skip(2),
+          ],
+        ),
+        ...game.players.skip(1),
+      ],
+    );
+  }
+
+  testWidgets('two deployed tokens wait for selection after the dice roll', (
+    tester,
+  ) async {
+    final controller = GameController(random: FixedRandom(2));
+    addTearDown(controller.dispose);
+    controller.resumeSavedGame(twoTokens());
+    controller.rollDice();
+    await tester.pump(GamePacing.diceRoll);
+    final rolled = controller.state!.gameState;
+    expect(rolled.legalMoves.length, 2);
+    await tester.pump(
+      GamePacing.autoMovePause + const Duration(milliseconds: 100),
+    );
+    expect(controller.state!.isAnimating, isFalse);
+    expect(controller.state!.gameState.phase, GamePhase.moveRequired);
+    // Select the other token, rather than the first legal option.
+    final chosen = rolled.legalMoves.last.tokenId;
+    controller.selectMove(chosen);
+    expect(controller.state!.isAnimating, isTrue);
+    expect(
+      controller.state!.gameState.currentPlayer.tokens
+          .firstWhere((t) => t.id == chosen)
+          .stepCount,
+      15,
+    );
+    controller.quitMatch();
+  });
+
+  testWidgets('another token in the home lane prevents unsolicited auto move', (
+    tester,
+  ) async {
+    final controller = GameController(random: FixedRandom(2));
+    addTearDown(controller.dispose);
+    controller.resumeSavedGame(twoTokens(nearHome: true));
+    controller.rollDice();
+    await tester.pump(GamePacing.diceRoll);
+    expect(controller.state!.gameState.legalMoves.length, 1);
+    await tester.pump(
+      GamePacing.autoMovePause + const Duration(milliseconds: 100),
+    );
+    expect(controller.state!.isAnimating, isFalse);
+    expect(controller.state!.gameState.phase, GamePhase.moveRequired);
+    controller.selectMove(
+      controller.state!.gameState.legalMoves.single.tokenId,
+    );
+    expect(controller.state!.isAnimating, isTrue);
+    controller.quitMatch();
+  });
+
+  testWidgets(
+    'resume rebuilds all choices instead of trusting a partial saved move list',
+    (tester) async {
+      final game = twoTokens();
+      final rolled = LudoEngine.applyRoll(
+        state: game,
+        player: game.currentPlayer,
+        diceValue: 2,
+      ).state;
+      final controller = GameController();
+      addTearDown(controller.dispose);
+      controller.resumeSavedGame(
+        rolled.copyWith(legalMoves: [rolled.legalMoves.first]),
+      );
+      expect(controller.state!.gameState.legalMoves.length, 2);
+      await tester.pump(
+        GamePacing.autoMovePause + const Duration(milliseconds: 100),
+      );
+      expect(controller.state!.isAnimating, isFalse);
+      controller.quitMatch();
+    },
+  );
   test('every local color maps to bottom left', () {
     for (final color in PlayerColor.values.take(4)) {
       expect(BoardPerspective.position(color, color), 3);
