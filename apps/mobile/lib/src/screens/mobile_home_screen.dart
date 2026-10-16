@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../widgets/game_symbol.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:game_engine/game_engine.dart';
 
@@ -9,6 +12,7 @@ import '../services/api_client.dart';
 import '../services/storage_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/mobile_ui.dart';
+import '../widgets/game_motion.dart';
 import 'settings_screen.dart';
 import '../widgets/auth_dialog.dart';
 import '../widgets/play_with_friends_dialog.dart';
@@ -255,7 +259,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
           IconButton(
             tooltip: 'Store and wallet',
             onPressed: () => _openStore(),
-            icon: const Icon(Icons.storefront_outlined),
+            icon: const GameSymbol(Icons.storefront_outlined),
           ),
           IconButton(
             tooltip: 'Notifications',
@@ -268,7 +272,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
             ),
             icon: Badge(
               isLabelVisible: _unreadNotifications > 0,
-              child: const Icon(Icons.notifications_none_rounded),
+              child: const GameSymbol(Icons.notifications_none_rounded),
             ),
           ),
           const SizedBox(width: 8),
@@ -281,23 +285,23 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
             setState(() => _selectedIndex = index),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+            icon: GameSymbol(Icons.home_outlined),
+            selectedIcon: GameSymbol(Icons.home_rounded),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.sports_esports_outlined),
-            selectedIcon: Icon(Icons.sports_esports_rounded),
+            icon: GameSymbol(Icons.sports_esports_outlined),
+            selectedIcon: GameSymbol(Icons.sports_esports_rounded),
             label: 'Play',
           ),
           NavigationDestination(
-            icon: Icon(Icons.auto_awesome_outlined),
-            selectedIcon: Icon(Icons.auto_awesome_rounded),
+            icon: GameSymbol(Icons.auto_awesome_outlined),
+            selectedIcon: GameSymbol(Icons.auto_awesome_rounded),
             label: 'Rewards',
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline_rounded),
-            selectedIcon: Icon(Icons.people_rounded),
+            icon: GameSymbol(Icons.people_outline_rounded),
+            selectedIcon: GameSymbol(Icons.people_rounded),
             label: 'Social',
           ),
         ],
@@ -306,6 +310,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
   }
 
   Widget _home() => MobilePageBody(
+    key: const ValueKey('home-tab'),
     children: [
       MobileHeading(
         'Ready to roll?',
@@ -382,7 +387,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 17, color: color),
+          GameSymbol(icon, size: 17, color: color),
           const SizedBox(width: 6),
           Text(
             label,
@@ -464,7 +469,10 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
             SizedBox(
               width: 104,
               height: 100,
-              child: CustomPaint(painter: _LobbyBoardPainter()),
+              child: GameIconMotion(
+                floating: true,
+                child: CustomPaint(painter: _LobbyBoardPainter()),
+              ),
             ),
           ],
         ),
@@ -473,7 +481,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: _playOnline,
-            icon: const Icon(Icons.play_arrow_rounded),
+            icon: const GameSymbol(Icons.play_arrow_rounded),
             label: const Text('Play online'),
           ),
         ),
@@ -517,6 +525,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
   );
 
   Widget _play() => MobilePageBody(
+    key: const ValueKey('play-tab'),
     children: [
       const MobileHeading(
         'Find your game',
@@ -559,6 +568,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
   );
 
   Widget _rewards() => MobilePageBody(
+    key: const ValueKey('rewards-tab'),
     children: [
       const MobileHeading(
         'Make every roll count',
@@ -626,6 +636,7 @@ class _MobileHomeScreenState extends ConsumerState<MobileHomeScreen> {
   );
 
   Widget _social() => MobilePageBody(
+    key: const ValueKey('social-tab'),
     children: [
       const MobileHeading(
         'Better together',

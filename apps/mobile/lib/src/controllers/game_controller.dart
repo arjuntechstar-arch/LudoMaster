@@ -97,8 +97,51 @@ class GameController extends StateNotifier<GameControllerState?> {
   void resumeSavedGame(GameState savedState) {
     _cancelActions();
     AudioService.startGameMusic();
+    // Saved move options are a cache. Rebuild them from all tokens and the roll.
+    if (savedState.phase == GamePhase.moveRequired &&
+        savedState.diceValue != null) {
+      savedState = savedState.copyWith(
+        legalMoves: MoveValidator.calculateLegalMoves(
+          state: savedState,
+          player: savedState.currentPlayer,
+          diceValue: savedState.diceValue!,
+        ),
+      );
+    }
     state = GameControllerState(gameState: savedState, hasSavedGame: true);
     _scheduleNextAction();
+  }
+
+  /// Only a lone deployed token may move without the player's selection.
+  /// A second token waiting for an exact home roll still counts as on the board.
+  /// On a six, every yard exit is also a separate choice.
+  static bool canAutoMove(GameState game) {
+    if (game.phase != GamePhase.moveRequired ||
+        !game.ruleset.autoMoveSingleLegalMove ||
+        game.diceValue == null) {
+      return false;
+    }
+    final moves = MoveValidator.calculateLegalMoves(
+      state: game,
+      player: game.currentPlayer,
+      diceValue: game.diceValue!,
+    );
+    if (moves.length != 1 ||
+        game.legalMoves.length != 1 ||
+        moves.single.tokenId != game.legalMoves.single.tokenId) {
+      return false;
+    }
+    final owner = game.players.firstWhere(
+      (player) =>
+          player.tokens.any((token) => token.id == moves.single.tokenId),
+    );
+    final candidates = owner.tokens.where(
+      (token) =>
+          token.state == TokenState.track ||
+          token.state == TokenState.homeLane ||
+          (token.state == TokenState.yard && game.diceValue == 6),
+    );
+    return candidates.length == 1;
   }
 
   void rollDice() {
@@ -265,12 +308,12 @@ class GameController extends StateNotifier<GameControllerState?> {
     } else {
       state = current.copyWith(isBotThinking: false);
       _startTurnTimer();
-      if (game.phase == GamePhase.moveRequired &&
-          game.ruleset.autoMoveSingleLegalMove &&
-          game.legalMoves.length == 1) {
+      if (canAutoMove(game)) {
         _autoMoveTimer?.cancel();
         _autoMoveTimer = Timer(GamePacing.autoMovePause, () {
-          if (stillCurrent()) selectMove(game.legalMoves.single.tokenId);
+          if (stillCurrent() && canAutoMove(state!.gameState)) {
+            selectMove(state!.gameState.legalMoves.single.tokenId);
+          }
         });
       }
     }
